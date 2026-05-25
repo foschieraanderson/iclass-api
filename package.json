@@ -12,7 +12,14 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "vitest run",
+    "test:unit": "vitest run src/tests/unit",
+    "test:integration": "vitest run src/tests/integration",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "db:test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
+    "db:test:reset": "dotenv -e .env.test -- prisma migrate reset --force"
   },
   "keywords": [],
   "author": "Anderson Foschiera",
@@ -41,13 +48,17 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "@types/nodemailer": "^8.0.0",
+    "@vitest/coverage-v8": "^4.1.7",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.8.3",
     "prisma": "^7.8.0",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.7"
   },
   "prisma": {
     "schema": "database/schema.prisma"
