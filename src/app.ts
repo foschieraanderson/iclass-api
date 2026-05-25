@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
 import { swaggerPlugin } from '@/plugins/swagger'
 import { jwtPlugin } from '@/plugins/jwt'
+import { emailPlugin } from '@/plugins/email'
 
 import { loggerConfig } from '@/config/logger'
 import { registerRoutes } from '@/routes'
@@ -26,6 +27,7 @@ export async function registerPlugins() {
   })
 
   await app.register(jwtPlugin)
+  await app.register(emailPlugin)
   await app.register(swaggerPlugin)
   await app.register(registerRoutes)
   await app.register(helmet, {
