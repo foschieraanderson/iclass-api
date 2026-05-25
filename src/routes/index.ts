@@ -4,10 +4,12 @@ import { userRoutes } from './user.route'
 import { authRoutes } from './auth.route'
 import { classRoutes } from './class.route'
 import { taskRoutes } from './task.route'
+import { submissionRoutes } from './submission.route'
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(authRoutes, { prefix: '/auth' })
   await app.register(userRoutes, { prefix: '/users' })
   await app.register(classRoutes, { prefix: '/classes' })
   await app.register(taskRoutes, { prefix: '/tasks' })
+  await app.register(submissionRoutes, { prefix: '/submissions' })
 }

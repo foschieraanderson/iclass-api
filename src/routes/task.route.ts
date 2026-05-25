@@ -7,7 +7,9 @@ import {
   updateTaskController,
   deleteTaskController
 } from '@/controllers/task.controller'
+import { createSubmissionController, listTaskSubmissionsController } from '@/controllers/submission.controller'
 import { taskParamsSchema, taskQuerySchema, taskResponseSchema } from '@/schemas/task.schema'
+import { taskSubmissionParamsSchema, submissionResponseSchema } from '@/schemas/submission.schema'
 import { errorSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
@@ -15,6 +17,7 @@ const authHeader = { security: [{ bearerAuth: [] }] }
 
 export async function taskRoutes(app: FastifyInstance) {
   const teacherOrAdmin = [app.authenticate, requireRole('teacher', 'admin')]
+  const studentOnly = [app.authenticate, requireRole('student')]
 
   app.post('/', {
     onRequest: teacherOrAdmin,
@@ -82,6 +85,41 @@ export async function taskRoutes(app: FastifyInstance) {
       }
     }
   }, updateTaskController)
+
+  app.post('/:taskId/submissions', {
+    onRequest: studentOnly,
+    schema: {
+      ...authHeader,
+      tags: ['Submissions'],
+      summary: 'Submit answer',
+      description: 'Submits a text answer and/or file for a task (multipart/form-data). Students can only submit to tasks from their enrolled classes.',
+      consumes: ['multipart/form-data'],
+      params: taskSubmissionParamsSchema,
+      response: {
+        201: submissionResponseSchema,
+        400: errorSchema,
+        403: errorSchema,
+        404: errorSchema,
+        409: errorSchema
+      }
+    }
+  }, createSubmissionController)
+
+  app.get('/:taskId/submissions', {
+    onRequest: teacherOrAdmin,
+    schema: {
+      ...authHeader,
+      tags: ['Submissions'],
+      summary: 'List task submissions',
+      description: 'Lists all submissions for a task. Teachers can only view submissions from their own classes.',
+      params: taskSubmissionParamsSchema,
+      response: {
+        200: submissionResponseSchema.array(),
+        403: errorSchema,
+        404: errorSchema
+      }
+    }
+  }, listTaskSubmissionsController)
 
   app.delete('/:id', {
     onRequest: teacherOrAdmin,

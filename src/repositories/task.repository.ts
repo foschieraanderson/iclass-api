@@ -51,6 +51,17 @@ export class TaskRepository {
     })
   }
 
+  async findAllForStudent(studentId: string, classId?: string) {
+    return prisma.task.findMany({
+      where: {
+        ...(classId ? { classId } : {}),
+        class: { students: { some: { studentId } } }
+      },
+      select: taskSelect,
+      orderBy: { createdAt: 'desc' }
+    })
+  }
+
   async findById(id: string) {
     return prisma.task.findUnique({ where: { id }, select: taskSelect })
   }

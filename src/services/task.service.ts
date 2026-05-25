@@ -58,7 +58,7 @@ export class TaskService {
       return allTasks.filter((t) => ownedIds.has(t.classId))
     }
 
-    return repository.findAll(classId)
+    return repository.findAllForStudent(requesterId, classId)
   }
 
   async findById(id: string) {
