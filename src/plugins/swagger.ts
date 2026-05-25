@@ -35,7 +35,8 @@ export const swaggerPlugin = fp(async (app: FastifyInstance) => {
         { name: 'Users', description: 'User management endpoints' },
         { name: 'Classes', description: 'Class (turma) management endpoints' },
         { name: 'Tasks', description: 'Task management endpoints' },
-        { name: 'Submissions', description: 'Task submission and grading endpoints' }
+        { name: 'Submissions', description: 'Task submission and grading endpoints' },
+        { name: 'Dashboard', description: 'Role-specific dashboard metrics' }
       ],
       components: {
         securitySchemes: {
