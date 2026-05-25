@@ -9,21 +9,28 @@ import {
 } from '@/controllers/user.controller'
 import { createUserSchema, updateUserSchema, userParamsSchema, userResponseSchema } from '@/schemas/user.schema'
 import { errorSchema } from '@/schemas/common.schema'
+import { requireRole } from '@/middlewares/require-role'
 
 const authHeader = { security: [{ bearerAuth: [] }] }
 
 export async function userRoutes(app: FastifyInstance) {
+  const adminOnly = [app.authenticate, requireRole('admin')]
+
   app.post(
     '/',
     {
+      onRequest: adminOnly,
       schema: {
+        ...authHeader,
         tags: ['Users'],
         summary: 'Create user',
-        description: 'Creates a new user.',
+        description: 'Creates a new user. Requires admin role.',
         body: createUserSchema,
         response: {
           201: userResponseSchema,
-          400: errorSchema
+          400: errorSchema,
+          401: errorSchema,
+          403: errorSchema
         }
       }
     },

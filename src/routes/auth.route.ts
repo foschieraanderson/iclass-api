@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify'
 
-import { loginController } from '@/controllers/auth.controller'
+import { loginController, refreshController } from '@/controllers/auth.controller'
 import { makePasswordResetController } from '@/controllers/password-reset.controller'
-import { loginSchema, tokenResponseSchema } from '@/schemas/auth.schema'
+import { loginSchema, loginResponseSchema, refreshBodySchema, accessTokenResponseSchema } from '@/schemas/auth.schema'
 import { forgotPasswordBodySchema, resetPasswordBodySchema, genericMessageResponseSchema } from '@/schemas/password-reset.schema'
 import { errorSchema } from '@/schemas/common.schema'
 
@@ -15,15 +15,32 @@ export async function authRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Auth'],
         summary: 'Login',
-        description: 'Authenticates a user and returns a JWT access token.',
+        description: 'Authenticates a user and returns an access token (1h) and a refresh token (7d).',
         body: loginSchema,
         response: {
-          200: tokenResponseSchema,
+          200: loginResponseSchema,
           401: errorSchema
         }
       }
     },
     loginController
+  )
+
+  app.post(
+    '/refresh',
+    {
+      schema: {
+        tags: ['Auth'],
+        summary: 'Refresh token',
+        description: 'Issues a new access token using a valid refresh token.',
+        body: refreshBodySchema,
+        response: {
+          200: accessTokenResponseSchema,
+          401: errorSchema
+        }
+      }
+    },
+    refreshController
   )
 
   app.post(

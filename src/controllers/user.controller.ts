@@ -5,11 +5,8 @@ import type { CreateUserDTO, UpdateUserDTO, UserParamsDTO } from '@/schemas/user
 
 const service = new UserService()
 
-export async function createUserController(
-  request: FastifyRequest<{ Body: CreateUserDTO }>,
-  reply: FastifyReply
-) {
-  const user = await service.create(request.body)
+export async function createUserController(request: FastifyRequest, reply: FastifyReply) {
+  const user = await service.create(request.body as CreateUserDTO)
   return reply.status(201).send(user)
 }
 
