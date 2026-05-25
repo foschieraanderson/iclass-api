@@ -121,6 +121,53 @@ describe('GET /users', () => {
       expect(user).not.toHaveProperty('password')
     }
   })
+
+  it('returns only teachers when role=teacher', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    await seedStudent()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users?role=teacher',
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
+    })
+
+    expect(res.statusCode).toBe(200)
+    const users = res.json() as Array<{ role: string }>
+    expect(users.every((u) => u.role === 'teacher')).toBe(true)
+    expect(users.some((u) => u.role === 'teacher')).toBe(true)
+    expect(users.find((u) => (u as Record<string, unknown>)['id'] === teacher.id)).toBeDefined()
+  })
+
+  it('returns only students when role=student', async () => {
+    const admin = await seedAdmin()
+    await seedTeacher()
+    const student = await seedStudent()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users?role=student',
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
+    })
+
+    expect(res.statusCode).toBe(200)
+    const users = res.json() as Array<{ role: string; id: string }>
+    expect(users.every((u) => u.role === 'student')).toBe(true)
+    expect(users.find((u) => u.id === student.id)).toBeDefined()
+  })
+
+  it('returns 400 for invalid role value', async () => {
+    const admin = await seedAdmin()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users?role=invalid',
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
 })
 
 describe('GET /users/:id', () => {

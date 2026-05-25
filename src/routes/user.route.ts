@@ -8,7 +8,7 @@ import {
   updateUserController,
   deleteUserController
 } from '@/controllers/user.controller'
-import { createUserSchema, updateUserSchema, userParamsSchema, userResponseSchema } from '@/schemas/user.schema'
+import { createUserSchema, updateUserSchema, userParamsSchema, userResponseSchema, listUsersQuerySchema } from '@/schemas/user.schema'
 import { errorSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
@@ -46,7 +46,8 @@ export async function userRoutes(app: FastifyInstance) {
         ...authHeader,
         tags: ['Users'],
         summary: 'List users',
-        description: 'Returns all registered users.',
+        description: 'Returns all registered users. Optionally filter by role.',
+        querystring: listUsersQuerySchema,
         response: {
           200: userResponseSchema.array(),
           401: errorSchema

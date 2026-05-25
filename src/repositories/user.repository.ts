@@ -27,8 +27,11 @@ export class UserRepository {
     })
   }
 
-  async findAll() {
-    return prisma.user.findMany({ select: publicSelect })
+  async findAll(role?: Role) {
+    return prisma.user.findMany({
+      where: role ? { role } : undefined,
+      select: publicSelect
+    })
   }
 
   async findById(id: string) {

@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { UserService } from '@/services/user.service'
-import type { CreateUserDTO, UpdateUserDTO, UserParamsDTO } from '@/schemas/user.schema'
+import type { CreateUserDTO, UpdateUserDTO, UserParamsDTO, ListUsersQueryDTO } from '@/schemas/user.schema'
 
 const service = new UserService()
 
@@ -15,11 +15,9 @@ export async function getMeController(request: FastifyRequest, reply: FastifyRep
   return reply.send(user)
 }
 
-export async function listUsersController(
-  _request: FastifyRequest,
-  reply: FastifyReply
-) {
-  const users = await service.findAll()
+export async function listUsersController(request: FastifyRequest, reply: FastifyReply) {
+  const { role } = request.query as ListUsersQueryDTO
+  const users = await service.findAll(role)
   return reply.send(users)
 }
 

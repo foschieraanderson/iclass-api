@@ -51,13 +51,23 @@ describe('UserService', () => {
   })
 
   describe('findAll', () => {
-    it('delegates to repository.findAll', async () => {
+    it('delegates to repository.findAll without role', async () => {
       mockRepo.findAll.mockResolvedValue([publicUser])
 
       const result = await service.findAll()
 
       expect(result).toEqual([publicUser])
-      expect(mockRepo.findAll).toHaveBeenCalledOnce()
+      expect(mockRepo.findAll).toHaveBeenCalledWith(undefined)
+    })
+
+    it('forwards role to repository.findAll when provided', async () => {
+      const teacher = { ...publicUser, role: 'teacher' }
+      mockRepo.findAll.mockResolvedValue([teacher])
+
+      const result = await service.findAll('teacher')
+
+      expect(result).toEqual([teacher])
+      expect(mockRepo.findAll).toHaveBeenCalledWith('teacher')
     })
   })
 

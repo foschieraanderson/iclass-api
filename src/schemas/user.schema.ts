@@ -33,6 +33,11 @@ export const userResponseSchema = z.object({
   updatedAt: z.date().describe('Last update timestamp')
 })
 
+export const listUsersQuerySchema = z.object({
+  role: userRoleSchema.optional().describe('Filter users by role')
+})
+
 export type CreateUserDTO = z.infer<typeof createUserSchema>
 export type UpdateUserDTO = z.infer<typeof updateUserSchema>
 export type UserParamsDTO = z.infer<typeof userParamsSchema>
+export type ListUsersQueryDTO = z.infer<typeof listUsersQuerySchema>

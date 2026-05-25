@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 
 import { UserRepository } from '@/repositories/user.repository'
+import type { Role } from '@/database/generated/index.js'
 import type { CreateUserDTO, UpdateUserDTO } from '@/schemas/user.schema'
 
 const repository = new UserRepository()
@@ -11,8 +12,8 @@ export class UserService {
     return repository.create({ ...data, password: hashedPassword })
   }
 
-  async findAll() {
-    return repository.findAll()
+  async findAll(role?: Role) {
+    return repository.findAll(role)
   }
 
   async findById(id: string) {
