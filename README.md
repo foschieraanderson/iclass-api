@@ -162,6 +162,7 @@ Rotas protegidas exigem o header `Authorization: Bearer <accessToken>`.
 | `POST` | `/api/v1/users` | admin | Cria um novo usuário |
 | `GET` | `/api/v1/users` | JWT | Lista todos os usuários (filtro opcional: `?role=teacher\|student\|admin`) |
 | `GET` | `/api/v1/users/me` | JWT | Retorna os dados do próprio usuário autenticado |
+| `PATCH` | `/api/v1/users/me/password` | JWT | Altera a senha do usuário autenticado |
 | `GET` | `/api/v1/users/:id` | JWT | Retorna um usuário pelo ID |
 | `PATCH` | `/api/v1/users/:id` | JWT | Atualiza parcialmente um usuário |
 | `DELETE` | `/api/v1/users/:id` | JWT | Remove um usuário |
@@ -174,6 +175,15 @@ curl -H "Authorization: Bearer <token>" "http://localhost:3000/api/v1/users?role
 
 # Listar apenas alunos
 curl -H "Authorization: Bearer <token>" "http://localhost:3000/api/v1/users?role=student"
+```
+
+**Alterar senha:**
+
+```bash
+curl -X PATCH http://localhost:3000/api/v1/users/me/password \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"currentPassword": "senhaAtual", "newPassword": "novaSenha123"}'
 ```
 
 **Campos do usuário:**
