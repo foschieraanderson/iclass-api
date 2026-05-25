@@ -14,11 +14,34 @@ enum Role {
 }
 
 model User {
-  id        String   @id
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(student)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String         @id
+  name            String
+  email           String         @unique
+  password        String
+  role            Role           @default(student)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  teachingClasses Class[]        @relation("ClassTeacher")
+  enrolledClasses ClassStudent[]
+}
+
+model Class {
+  id        String         @id
+  code      String         @unique
+  period    String
+  grade     String
+  teacherId String
+  teacher   User           @relation("ClassTeacher", fields: [teacherId], references: [id])
+  students  ClassStudent[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model ClassStudent {
+  classId   String
+  studentId String
+  class     Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   User  @relation(fields: [studentId], references: [id])
+
+  @@id([classId, studentId])
 }
