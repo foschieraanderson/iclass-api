@@ -86,6 +86,30 @@ export class ClassRepository {
     })
   }
 
+  async findReport(classId: string) {
+    return prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        code: true,
+        teacherId: true,
+        tasks: {
+          select: {
+            id: true,
+            title: true,
+            score: true,
+            submissions: {
+              select: { studentId: true, grade: true, gradedAt: true }
+            }
+          }
+        },
+        students: {
+          select: { student: { select: publicUserSelect } }
+        }
+      }
+    })
+  }
+
   async addStudents(classId: string, studentIds: string[]): Promise<void> {
     await prisma.classStudent.createMany({
       data: studentIds.map((studentId) => ({ classId, studentId })),

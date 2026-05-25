@@ -48,6 +48,35 @@ export const classStudentBulkSchema = z.object({
   studentIds: z.array(z.string()).min(1, { message: 'At least one student ID is required' }).describe('Array of student UUIDs')
 })
 
+const reportSubmissionSchema = z.object({
+  taskId: z.string(),
+  submitted: z.boolean(),
+  grade: z.number().nullable(),
+  gradedAt: z.date().nullable()
+})
+
+const reportTaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  score: z.number()
+})
+
+const reportStudentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  submissions: z.array(reportSubmissionSchema),
+  totalEarned: z.number(),
+  totalPossible: z.number()
+})
+
+export const classReportSchema = z.object({
+  classId: z.string(),
+  classCode: z.string(),
+  tasks: z.array(reportTaskSchema),
+  students: z.array(reportStudentSchema)
+})
+
 export type CreateClassDTO = z.infer<typeof createClassSchema>
 export type UpdateClassDTO = z.infer<typeof updateClassSchema>
 export type ClassParamsDTO = z.infer<typeof classParamsSchema>

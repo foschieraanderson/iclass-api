@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify'
 
 import { getTestApp, bearerHeader } from '@/tests/helpers/app'
 import { cleanDatabase } from '@/tests/helpers/database'
-import { seedAdmin, seedTeacher, seedStudent, seedClass } from '@/tests/helpers/fixtures'
+import { seedAdmin, seedTeacher, seedStudent, seedClass, seedTask, seedSubmission } from '@/tests/helpers/fixtures'
 
 let app: FastifyInstance
 
@@ -402,5 +402,115 @@ describe('DELETE /classes/:id/students', () => {
     })
 
     expect(res.statusCode).toBe(403)
+  })
+})
+
+describe('GET /classes/:id/report', () => {
+  it('returns 200 with correct shape for teacher of the class', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+    const task = await seedTask({ classId: cls.id, createdById: teacher.id, title: 'Task A', score: 5 })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/classes/${cls.id}/report`,
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body).toMatchObject({ classId: cls.id, classCode: cls.code })
+    expect(body.tasks).toHaveLength(1)
+    expect(body.tasks[0]).toMatchObject({ id: task.id, title: 'Task A', score: 5 })
+    expect(body.students).toHaveLength(1)
+    expect(body.students[0].id).toBe(student.id)
+    expect(body.students[0].submissions).toHaveLength(1)
+  })
+
+  it('returns 200 for admin on any class', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/classes/${cls.id}/report`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
+    })
+
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('shows submitted: true and grade when submission is graded', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+    const task = await seedTask({ classId: cls.id, createdById: teacher.id, score: 8 })
+    await seedSubmission({ taskId: task.id, studentId: student.id, grade: 8 })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/classes/${cls.id}/report`,
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
+    })
+
+    const sub = res.json().students[0].submissions[0]
+    expect(sub.submitted).toBe(true)
+    expect(sub.grade).toBe(8)
+    expect(res.json().students[0].totalEarned).toBe(8)
+    expect(res.json().students[0].totalPossible).toBe(8)
+  })
+
+  it('shows submitted: false for student with no submission', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+    await seedTask({ classId: cls.id, createdById: teacher.id, score: 5 })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/classes/${cls.id}/report`,
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
+    })
+
+    const sub = res.json().students[0].submissions[0]
+    expect(sub.submitted).toBe(false)
+    expect(sub.grade).toBeNull()
+    expect(res.json().students[0].totalEarned).toBe(0)
+  })
+
+  it('returns 403 for teacher of another class', async () => {
+    const teacher1 = await seedTeacher()
+    const teacher2 = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher1.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/classes/${cls.id}/report`,
+      headers: bearerHeader(app, { sub: teacher2.id, role: 'teacher' })
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('returns 401 when not authenticated', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/v1/classes/any-id/report' })
+
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 404 for non-existent class', async () => {
+    const teacher = await seedTeacher()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/classes/non-existent/report',
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
+    })
+
+    expect(res.statusCode).toBe(404)
   })
 })

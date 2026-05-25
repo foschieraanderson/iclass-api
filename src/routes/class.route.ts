@@ -4,12 +4,13 @@ import {
   createClassController,
   listClassesController,
   getClassController,
+  getClassReportController,
   updateClassController,
   deleteClassController,
   addStudentsController,
   removeStudentsController
 } from '@/controllers/class.controller'
-import { createClassSchema, updateClassSchema, classParamsSchema, classResponseSchema, classStudentBulkSchema } from '@/schemas/class.schema'
+import { createClassSchema, updateClassSchema, classParamsSchema, classResponseSchema, classStudentBulkSchema, classReportSchema } from '@/schemas/class.schema'
 import { errorSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
@@ -57,6 +58,27 @@ export async function classRoutes(app: FastifyInstance) {
       }
     },
     listClassesController
+  )
+
+  app.get(
+    '/:id/report',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        ...authHeader,
+        tags: ['Classes'],
+        summary: 'Class score report',
+        description: 'Returns per-student task scores for a class. Teachers can only access their own classes.',
+        params: classParamsSchema,
+        response: {
+          200: classReportSchema,
+          401: errorSchema,
+          403: errorSchema,
+          404: errorSchema
+        }
+      }
+    },
+    getClassReportController
   )
 
   app.get(

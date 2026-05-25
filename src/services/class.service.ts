@@ -88,6 +88,36 @@ export class ClassService {
     await repository.removeStudents(classId, studentIds)
   }
 
+  async getReport(classId: string, requesterId: string, requesterRole: string) {
+    const raw = await repository.findReport(classId)
+    if (!raw) throw Object.assign(new Error('Class not found'), { statusCode: 404 })
+
+    if (requesterRole === 'teacher' && raw.teacherId !== requesterId) {
+      throw Object.assign(new Error('Forbidden'), { statusCode: 403 })
+    }
+
+    const tasks = raw.tasks.map((t) => ({ id: t.id, title: t.title, score: t.score }))
+    const totalPossible = tasks.reduce((sum, t) => sum + t.score, 0)
+
+    const students = raw.students.map(({ student }) => {
+      const submissions = tasks.map((task) => {
+        const sub = raw.tasks
+          .find((t) => t.id === task.id)!
+          .submissions.find((s) => s.studentId === student.id)
+        return {
+          taskId: task.id,
+          submitted: !!sub,
+          grade: sub?.grade ?? null,
+          gradedAt: sub?.gradedAt ?? null
+        }
+      })
+      const totalEarned = submissions.reduce((sum, s) => sum + (s.grade ?? 0), 0)
+      return { ...student, submissions, totalEarned, totalPossible }
+    })
+
+    return { classId: raw.id, classCode: raw.code, tasks, students }
+  }
+
   async delete(id: string) {
     await this.findById(id)
     await repository.delete(id)

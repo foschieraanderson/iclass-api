@@ -33,6 +33,12 @@ export async function deleteClassController(request: FastifyRequest, reply: Fast
   return reply.status(204).send()
 }
 
+export async function getClassReportController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as ClassParamsDTO
+  const report = await service.getReport(id, request.user.sub, request.user.role)
+  return reply.send(report)
+}
+
 export async function addStudentsController(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as ClassParamsDTO
   await service.addStudents(id, request.body as ClassStudentBulkDTO)
