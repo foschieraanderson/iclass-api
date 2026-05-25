@@ -1,4 +1,4 @@
-import Fastify, { FastifyError } from 'fastify'
+import Fastify, { FastifyError, FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
@@ -37,4 +37,24 @@ export async function registerPlugins() {
   await app.register(helmet, {
     contentSecurityPolicy: false
   })
+}
+
+export async function buildApp(): Promise<FastifyInstance> {
+  const instance = Fastify({ logger: false })
+
+  instance.setValidatorCompiler(validatorCompiler)
+  instance.setSerializerCompiler(serializerCompiler)
+  instance.setErrorHandler((error: FastifyError, _request, reply) => {
+    reply.status(error.statusCode ?? 500).send({ message: error.message })
+  })
+
+  await instance.register(cors, { origin: true })
+  await instance.register(jwtPlugin)
+  await instance.register(emailPlugin)
+  await instance.register(multipartPlugin)
+  await instance.register(staticPlugin)
+  await instance.register(registerRoutes)
+
+  await instance.ready()
+  return instance
 }
