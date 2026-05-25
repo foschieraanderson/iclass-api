@@ -225,11 +225,23 @@ O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8
 | `GET` | `/api/v1/submissions/:id` | JWT | Retorna uma submissão (student: apenas a própria) |
 | `PATCH` | `/api/v1/submissions/:id` | teacher \| admin | Avalia a submissão (`grade` + `feedback`) |
 
+### Dashboard
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| `GET` | `/api/v1/dashboard` | JWT | Retorna métricas específicas por perfil do usuário autenticado |
+
+A resposta varia conforme o `role` do token JWT:
+
+- **Student** — resumo de tasks (total, entregues, pendentes, expiradas, corrigidas) e pontuação (total ganho, total possível, média)
+- **Teacher** — visão geral das próprias turmas (total de turmas, alunos, tarefas, correções pendentes) e lista detalhada por turma
+- **Admin** — métricas globais da plataforma (usuários por perfil, turmas e submissões totais, correções pendentes)
+
 ---
 
 ## Testes
 
-A suíte cobre 6 services (unitários) e 5 grupos de endpoints (integração), totalizando 179 testes.
+A suíte cobre 7 services (unitários) e 6 grupos de endpoints (integração), totalizando 202 testes.
 
 ### Pré-requisitos
 
@@ -295,27 +307,31 @@ iclass-api/
     │   ├── user.route.ts
     │   ├── class.route.ts
     │   ├── task.route.ts
-    │   └── submission.route.ts
+    │   ├── submission.route.ts
+    │   └── dashboard.route.ts
     ├── controllers/
     │   ├── auth.controller.ts
     │   ├── user.controller.ts
     │   ├── class.controller.ts
     │   ├── password-reset.controller.ts
     │   ├── task.controller.ts
-    │   └── submission.controller.ts
+    │   ├── submission.controller.ts
+    │   └── dashboard.controller.ts
     ├── services/
     │   ├── auth.service.ts
     │   ├── user.service.ts
     │   ├── class.service.ts
     │   ├── password-reset.service.ts
     │   ├── task.service.ts
-    │   └── submission.service.ts
+    │   ├── submission.service.ts
+    │   └── dashboard.service.ts
     ├── repositories/
     │   ├── user.repository.ts
     │   ├── class.repository.ts
     │   ├── password-reset.repository.ts
     │   ├── task.repository.ts
-    │   └── submission.repository.ts
+    │   ├── submission.repository.ts
+    │   └── dashboard.repository.ts
     ├── schemas/
     │   ├── common.schema.ts
     │   ├── auth.schema.ts
@@ -323,7 +339,8 @@ iclass-api/
     │   ├── class.schema.ts
     │   ├── password-reset.schema.ts
     │   ├── task.schema.ts
-    │   └── submission.schema.ts
+    │   ├── submission.schema.ts
+    │   └── dashboard.schema.ts
     ├── database/
     │   └── prisma.ts         # Singleton do PrismaClient
     └── tests/
@@ -339,11 +356,13 @@ iclass-api/
         │   ├── class.service.test.ts
         │   ├── task.service.test.ts
         │   ├── submission.service.test.ts
-        │   └── password-reset.service.test.ts
+        │   ├── password-reset.service.test.ts
+        │   └── dashboard.service.test.ts
         └── integration/                    # Banco real (iclass_test)
             ├── auth.routes.test.ts
             ├── user.routes.test.ts
             ├── class.routes.test.ts
             ├── task.routes.test.ts
-            └── submission.routes.test.ts
+            ├── submission.routes.test.ts
+            └── dashboard.routes.test.ts
 ```
