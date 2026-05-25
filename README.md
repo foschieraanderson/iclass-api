@@ -221,6 +221,7 @@ O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8
 | `POST` | `/api/v1/tasks/:taskId/submissions` | student | Envia resposta à tarefa (multipart — texto e/ou arquivo) |
 | `GET` | `/api/v1/tasks/:taskId/submissions` | teacher \| admin | Lista submissões de uma tarefa |
 | `GET` | `/api/v1/submissions/mine` | student | Lista as próprias submissões |
+| `GET` | `/api/v1/submissions/report` | student | Relatório consolidado de tasks do aluno (status, prazo, notas) |
 | `GET` | `/api/v1/submissions/:id` | JWT | Retorna uma submissão (student: apenas a própria) |
 | `PATCH` | `/api/v1/submissions/:id` | teacher \| admin | Avalia a submissão (`grade` + `feedback`) |
 
@@ -228,7 +229,7 @@ O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8
 
 ## Testes
 
-A suíte cobre 6 services (unitários) e 5 grupos de endpoints (integração), totalizando 163 testes.
+A suíte cobre 6 services (unitários) e 5 grupos de endpoints (integração), totalizando 179 testes.
 
 ### Pré-requisitos
 
