@@ -64,6 +64,28 @@ describe('POST /users', () => {
   })
 })
 
+describe('GET /users/me', () => {
+  it('returns 200 with the authenticated user data', async () => {
+    const student = await seedStudent()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/users/me',
+      headers: bearerHeader(app, { sub: student.id, role: 'student' })
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toMatchObject({ id: student.id, email: student.email })
+    expect(res.json()).not.toHaveProperty('password')
+  })
+
+  it('returns 401 when not authenticated', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/v1/users/me' })
+
+    expect(res.statusCode).toBe(401)
+  })
+})
+
 describe('GET /users', () => {
   it('returns 200 with array of users for authenticated requester', async () => {
     const admin = await seedAdmin()

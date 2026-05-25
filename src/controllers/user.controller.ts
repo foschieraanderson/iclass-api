@@ -10,6 +10,11 @@ export async function createUserController(request: FastifyRequest, reply: Fasti
   return reply.status(201).send(user)
 }
 
+export async function getMeController(request: FastifyRequest, reply: FastifyReply) {
+  const user = await service.findById(request.user.sub)
+  return reply.send(user)
+}
+
 export async function listUsersController(
   _request: FastifyRequest,
   reply: FastifyReply

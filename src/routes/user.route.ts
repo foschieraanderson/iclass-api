@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 
 import {
   createUserController,
+  getMeController,
   listUsersController,
   getUserController,
   updateUserController,
@@ -53,6 +54,24 @@ export async function userRoutes(app: FastifyInstance) {
       }
     },
     listUsersController
+  )
+
+  app.get(
+    '/me',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        ...authHeader,
+        tags: ['Users'],
+        summary: 'Get current user',
+        description: 'Returns the authenticated user\'s own data.',
+        response: {
+          200: userResponseSchema,
+          401: errorSchema
+        }
+      }
+    },
+    getMeController
   )
 
   app.get(
