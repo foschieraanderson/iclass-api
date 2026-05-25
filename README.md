@@ -11,6 +11,7 @@ REST API da plataforma iClass — gerencia usuários, turmas e recursos relacion
 - **[JWT](https://jwt.io/)** — autenticação via `@fastify/jwt`
 - **[TypeScript](https://www.typescriptlang.org/)** — tipagem estática
 - **[Swagger UI](http://localhost:3000/docs)** — documentação interativa da API
+- **[Nodemailer](https://nodemailer.com/)** — envio de emails transacionais (recuperação de senha)
 
 ## Pré-requisitos
 
@@ -49,6 +50,11 @@ Edite o `.env` conforme necessário. Os valores padrão já funcionam com o Dock
 | `NODE_ENV` | Ambiente de execução | `development` |
 | `DATABASE_URL` | String de conexão PostgreSQL | `postgresql://postgres:postgres@localhost:5432/iclass` |
 | `JWT_SECRET` | Chave secreta para assinar tokens JWT (mín. 32 chars) | — |
+| `SMTP_HOST` | Endereço do servidor SMTP | — |
+| `SMTP_PORT` | Porta SMTP | `587` |
+| `SMTP_USER` | Usuário de autenticação SMTP | — |
+| `SMTP_PASS` | Senha de autenticação SMTP | — |
+| `SMTP_FROM` | Remetente dos emails (ex: `"iClass <noreply@example.com>"`) | — |
 
 Para gerar um `JWT_SECRET` seguro:
 ```bash
@@ -99,6 +105,8 @@ A documentação interativa em `http://localhost:3000/docs`.
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | `POST` | `/auth/login` | — | Retorna um JWT access token |
+| `POST` | `/auth/forgot-password` | — | Envia código de 6 dígitos para o email (expira em 15 min) |
+| `POST` | `/auth/reset-password` | — | Valida o código e redefine a senha |
 
 **Exemplo de login:**
 ```bash
@@ -110,6 +118,19 @@ curl -X POST http://localhost:3000/auth/login \
 **Resposta:**
 ```json
 { "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+```
+
+**Exemplo de recuperação de senha:**
+```bash
+# 1. Solicitar código
+curl -X POST http://localhost:3000/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{"email": "usuario@email.com"}'
+
+# 2. Redefinir senha com o código recebido por email
+curl -X POST http://localhost:3000/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{"email": "usuario@email.com", "code": "482910", "newPassword": "novaSenha123"}'
 ```
 
 ### Usuários
@@ -164,23 +185,33 @@ iclass-api/
     │   └── logger.ts         # Configuração do logger (pino)
     ├── plugins/
     │   ├── swagger.ts        # Documentação OpenAPI / Swagger UI
-    │   └── jwt.ts            # JWT plugin + decorator authenticate
+    │   ├── jwt.ts            # JWT plugin + decorator authenticate
+    │   └── email.ts          # Nodemailer plugin + decorator sendEmail
     ├── routes/
     │   ├── index.ts          # Registro central de rotas
     │   ├── auth.route.ts     # Rotas de autenticação
-    │   └── user.route.ts     # Rotas de usuários
+    │   ├── user.route.ts     # Rotas de usuários
+    │   └── class.route.ts    # Rotas de turmas
     ├── controllers/
     │   ├── auth.controller.ts
-    │   └── user.controller.ts
+    │   ├── user.controller.ts
+    │   ├── class.controller.ts
+    │   └── password-reset.controller.ts
     ├── services/
-    │   ├── auth.service.ts   # Validação de credenciais
-    │   └── user.service.ts   # Regras de negócio (hash de senha, etc.)
+    │   ├── auth.service.ts           # Validação de credenciais
+    │   ├── user.service.ts           # Regras de negócio de usuário
+    │   ├── class.service.ts          # Regras de negócio de turma
+    │   └── password-reset.service.ts # Geração e validação de código de reset
     ├── repositories/
-    │   └── user.repository.ts  # Acesso ao banco via Prisma
+    │   ├── user.repository.ts          # Acesso ao banco via Prisma
+    │   ├── class.repository.ts
+    │   └── password-reset.repository.ts
     ├── schemas/
-    │   ├── common.schema.ts  # Schemas compartilhados (errorSchema)
-    │   ├── auth.schema.ts    # Schemas de autenticação
-    │   └── user.schema.ts    # Schemas de usuário
+    │   ├── common.schema.ts        # Schemas compartilhados (errorSchema)
+    │   ├── auth.schema.ts          # Schemas de autenticação
+    │   ├── user.schema.ts          # Schemas de usuário
+    │   ├── class.schema.ts         # Schemas de turma
+    │   └── password-reset.schema.ts
     └── database/
         └── prisma.ts         # Singleton do PrismaClient
 ```
