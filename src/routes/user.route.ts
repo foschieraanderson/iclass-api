@@ -10,7 +10,7 @@ import {
   deleteUserController
 } from '@/controllers/user.controller'
 import { changePasswordSchema, createUserSchema, updateUserSchema, userParamsSchema, userResponseSchema, listUsersQuerySchema } from '@/schemas/user.schema'
-import { errorSchema } from '@/schemas/common.schema'
+import { errorSchema, messageResponseSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
 const authHeader = { security: [{ bearerAuth: [] }] }
@@ -107,7 +107,7 @@ export async function userRoutes(app: FastifyInstance) {
         description: 'Changes the authenticated user\'s own password.',
         body: changePasswordSchema,
         response: {
-          200: { type: 'object', properties: { message: { type: 'string' } } },
+          200: messageResponseSchema,
           400: errorSchema,
           401: errorSchema
         }

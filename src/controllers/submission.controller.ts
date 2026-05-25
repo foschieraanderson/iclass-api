@@ -1,3 +1,5 @@
+import path from 'path'
+
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { SubmissionService } from '@/services/submission.service'
@@ -52,4 +54,21 @@ export async function gradeSubmissionController(request: FastifyRequest, reply: 
   const { id } = request.params as SubmissionParamsDTO
   const submission = await service.grade(id, request.body as GradeSubmissionDTO, request.user.sub, request.user.role)
   return reply.send(submission)
+}
+
+export async function downloadSubmissionFileController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as SubmissionParamsDTO
+  const submission = await service.findById(id, request.user.sub, request.user.role)
+
+  if (!submission) {
+    throw Object.assign(new Error('Submission not found'), { statusCode: 404 })
+  }
+
+  if (!submission.fileUrl) {
+    throw Object.assign(new Error('Esta submissão não possui arquivo'), { statusCode: 404 })
+  }
+
+  const filename = path.basename(submission.fileUrl)
+  reply.header('Content-Disposition', `attachment; filename="${filename}"`)
+  return reply.sendFile(filename)
 }

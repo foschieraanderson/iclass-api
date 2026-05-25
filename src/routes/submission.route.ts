@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 
 import {
+  downloadSubmissionFileController,
   listMineController,
   getStudentReportController,
   getSubmissionController,
@@ -44,6 +45,22 @@ export async function submissionRoutes(app: FastifyInstance) {
       }
     }
   }, getStudentReportController)
+
+  app.get('/:id/download', {
+    onRequest: [app.authenticate],
+    schema: {
+      ...authHeader,
+      tags: ['Submissions'],
+      summary: 'Download submission file',
+      description: 'Downloads the PDF file attached to a submission. Students can only download their own; teachers can only download from their own tasks.',
+      params: submissionParamsSchema,
+      response: {
+        401: errorSchema,
+        403: errorSchema,
+        404: errorSchema
+      }
+    }
+  }, downloadSubmissionFileController)
 
   app.get('/:id', {
     onRequest: [app.authenticate],
