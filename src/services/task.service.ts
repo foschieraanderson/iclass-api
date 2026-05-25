@@ -43,6 +43,10 @@ export class TaskService {
   }
 
   async findAll(classId: string | undefined, requesterId: string, requesterRole: string) {
+    if (requesterRole === 'admin') {
+      return repository.findAll(classId)
+    }
+
     if (requesterRole === 'teacher') {
       const teachingClasses = await classRepository.findAll()
       const ownedIds = new Set(teachingClasses.filter((c) => c.teacher.id === requesterId).map((c) => c.id))
