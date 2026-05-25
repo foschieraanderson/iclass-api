@@ -17,7 +17,7 @@ describe('POST /auth/login', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: user.email, password: DEFAULT_PASSWORD }
     })
 
@@ -33,7 +33,7 @@ describe('POST /auth/login', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: user.email, password: 'wrongpassword' }
     })
 
@@ -43,7 +43,7 @@ describe('POST /auth/login', () => {
   it('returns 401 for unknown email', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: 'ghost@ghost.com', password: 'pw' }
     })
 
@@ -53,7 +53,7 @@ describe('POST /auth/login', () => {
   it('returns 400 for malformed body', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: 'not-an-email', password: 'pw' }
     })
 
@@ -68,7 +68,7 @@ describe('POST /auth/refresh', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/refresh',
+      url: '/api/v1/auth/refresh',
       payload: { refreshToken }
     })
 
@@ -82,7 +82,7 @@ describe('POST /auth/refresh', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/refresh',
+      url: '/api/v1/auth/refresh',
       payload: { refreshToken: accessToken }
     })
 
@@ -92,7 +92,7 @@ describe('POST /auth/refresh', () => {
   it('returns 401 for malformed token', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/refresh',
+      url: '/api/v1/auth/refresh',
       payload: { refreshToken: 'not.a.jwt' }
     })
 
@@ -104,7 +104,7 @@ describe('POST /auth/forgot-password', () => {
   it('returns 200 with generic message when email does not exist', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/forgot-password',
+      url: '/api/v1/auth/forgot-password',
       payload: { email: 'ghost@ghost.com' }
     })
 
@@ -117,7 +117,7 @@ describe('POST /auth/forgot-password', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/forgot-password',
+      url: '/api/v1/auth/forgot-password',
       payload: { email: user.email }
     })
 
@@ -133,7 +133,7 @@ describe('POST /auth/reset-password', () => {
 
     const resetRes = await app.inject({
       method: 'POST',
-      url: '/auth/reset-password',
+      url: '/api/v1/auth/reset-password',
       payload: { email: user.email, code: '111111', newPassword: 'NewPassword99' }
     })
 
@@ -141,7 +141,7 @@ describe('POST /auth/reset-password', () => {
 
     const loginRes = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: user.email, password: 'NewPassword99' }
     })
     expect(loginRes.statusCode).toBe(200)
@@ -152,7 +152,7 @@ describe('POST /auth/reset-password', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/reset-password',
+      url: '/api/v1/auth/reset-password',
       payload: { email: user.email, code: '000000', newPassword: 'NewPass99' }
     })
 
@@ -165,7 +165,7 @@ describe('POST /auth/reset-password', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/auth/reset-password',
+      url: '/api/v1/auth/reset-password',
       payload: { email: user.email, code: '222222', newPassword: 'NewPass99' }
     })
 

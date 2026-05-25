@@ -107,18 +107,20 @@ A documentação interativa em `http://localhost:3000/docs`.
 
 ## Endpoints
 
+Todos os endpoints estão sob o prefixo `/api/v1`.
+
 ### Autenticação
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| `POST` | `/auth/login` | — | Retorna `accessToken` (1h) e `refreshToken` (7d) |
-| `POST` | `/auth/refresh` | — | Troca o `refreshToken` por um novo `accessToken` |
-| `POST` | `/auth/forgot-password` | — | Envia código de 6 dígitos para o email (expira em 15 min) |
-| `POST` | `/auth/reset-password` | — | Valida o código e redefine a senha |
+| `POST` | `/api/v1/auth/login` | — | Retorna `accessToken` (1h) e `refreshToken` (7d) |
+| `POST` | `/api/v1/auth/refresh` | — | Troca o `refreshToken` por um novo `accessToken` |
+| `POST` | `/api/v1/auth/forgot-password` | — | Envia código de 6 dígitos para o email (expira em 15 min) |
+| `POST` | `/api/v1/auth/reset-password` | — | Valida o código e redefine a senha |
 
 **Exemplo de login:**
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "usuario@email.com", "password": "senha123"}'
 ```
@@ -133,7 +135,7 @@ curl -X POST http://localhost:3000/auth/login \
 
 **Renovar o access token:**
 ```bash
-curl -X POST http://localhost:3000/auth/refresh \
+curl -X POST http://localhost:3000/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refreshToken": "<refreshToken>"}'
 ```
@@ -141,12 +143,12 @@ curl -X POST http://localhost:3000/auth/refresh \
 **Exemplo de recuperação de senha:**
 ```bash
 # 1. Solicitar código
-curl -X POST http://localhost:3000/auth/forgot-password \
+curl -X POST http://localhost:3000/api/v1/auth/forgot-password \
   -H "Content-Type: application/json" \
   -d '{"email": "usuario@email.com"}'
 
 # 2. Redefinir senha com o código recebido por email
-curl -X POST http://localhost:3000/auth/reset-password \
+curl -X POST http://localhost:3000/api/v1/auth/reset-password \
   -H "Content-Type: application/json" \
   -d '{"email": "usuario@email.com", "code": "482910", "newPassword": "novaSenha123"}'
 ```
@@ -157,11 +159,11 @@ Rotas protegidas exigem o header `Authorization: Bearer <accessToken>`.
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| `POST` | `/users` | admin | Cria um novo usuário |
-| `GET` | `/users` | JWT | Lista todos os usuários |
-| `GET` | `/users/:id` | JWT | Retorna um usuário pelo ID |
-| `PATCH` | `/users/:id` | JWT | Atualiza parcialmente um usuário |
-| `DELETE` | `/users/:id` | JWT | Remove um usuário |
+| `POST` | `/api/v1/users` | admin | Cria um novo usuário |
+| `GET` | `/api/v1/users` | JWT | Lista todos os usuários |
+| `GET` | `/api/v1/users/:id` | JWT | Retorna um usuário pelo ID |
+| `PATCH` | `/api/v1/users/:id` | JWT | Atualiza parcialmente um usuário |
+| `DELETE` | `/api/v1/users/:id` | JWT | Remove um usuário |
 
 **Campos do usuário:**
 
@@ -176,11 +178,11 @@ Rotas protegidas exigem o header `Authorization: Bearer <accessToken>`.
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| `POST` | `/classes` | admin | Cria uma turma com professor e alunos |
-| `GET` | `/classes` | JWT | Lista todas as turmas |
-| `GET` | `/classes/:id` | JWT | Retorna uma turma pelo ID |
-| `PATCH` | `/classes/:id` | admin | Atualiza turma (período, série, professor, alunos) |
-| `DELETE` | `/classes/:id` | admin | Remove uma turma |
+| `POST` | `/api/v1/classes` | admin | Cria uma turma com professor e alunos |
+| `GET` | `/api/v1/classes` | JWT | Lista todas as turmas |
+| `GET` | `/api/v1/classes/:id` | JWT | Retorna uma turma pelo ID |
+| `PATCH` | `/api/v1/classes/:id` | admin | Atualiza turma (período, série, professor, alunos) |
+| `DELETE` | `/api/v1/classes/:id` | admin | Remove uma turma |
 
 O campo `code` é gerado automaticamente a partir de `period` + `grade` (ex: `"2026/1-3A"`).
 
@@ -188,11 +190,11 @@ O campo `code` é gerado automaticamente a partir de `period` + `grade` (ex: `"2
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| `POST` | `/tasks` | admin \| teacher | Cria uma tarefa (multipart/form-data, aceita arquivo) |
-| `GET` | `/tasks` | JWT | Lista tarefas — admin/teacher veem as próprias; alunos veem as da turma |
-| `GET` | `/tasks/:id` | JWT | Retorna uma tarefa pelo ID |
-| `PATCH` | `/tasks/:id` | admin \| teacher | Atualiza tarefa (teacher: apenas da própria turma) |
-| `DELETE` | `/tasks/:id` | admin \| teacher | Remove tarefa (teacher: apenas da própria turma) |
+| `POST` | `/api/v1/tasks` | admin \| teacher | Cria uma tarefa (multipart/form-data, aceita arquivo) |
+| `GET` | `/api/v1/tasks` | JWT | Lista tarefas — admin/teacher veem as próprias; alunos veem as da turma |
+| `GET` | `/api/v1/tasks/:id` | JWT | Retorna uma tarefa pelo ID |
+| `PATCH` | `/api/v1/tasks/:id` | admin \| teacher | Atualiza tarefa (teacher: apenas da própria turma) |
+| `DELETE` | `/api/v1/tasks/:id` | admin \| teacher | Remove tarefa (teacher: apenas da própria turma) |
 
 O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144`.
 
@@ -200,11 +202,11 @@ O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| `POST` | `/tasks/:taskId/submissions` | student | Envia resposta à tarefa (multipart — texto e/ou arquivo) |
-| `GET` | `/tasks/:taskId/submissions` | teacher \| admin | Lista submissões de uma tarefa |
-| `GET` | `/submissions/mine` | student | Lista as próprias submissões |
-| `GET` | `/submissions/:id` | JWT | Retorna uma submissão (student: apenas a própria) |
-| `PATCH` | `/submissions/:id` | teacher \| admin | Avalia a submissão (`grade` + `feedback`) |
+| `POST` | `/api/v1/tasks/:taskId/submissions` | student | Envia resposta à tarefa (multipart — texto e/ou arquivo) |
+| `GET` | `/api/v1/tasks/:taskId/submissions` | teacher \| admin | Lista submissões de uma tarefa |
+| `GET` | `/api/v1/submissions/mine` | student | Lista as próprias submissões |
+| `GET` | `/api/v1/submissions/:id` | JWT | Retorna uma submissão (student: apenas a própria) |
+| `PATCH` | `/api/v1/submissions/:id` | teacher \| admin | Avalia a submissão (`grade` + `feedback`) |
 
 ---
 

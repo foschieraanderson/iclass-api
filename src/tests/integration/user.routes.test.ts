@@ -17,7 +17,7 @@ describe('POST /users', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/users',
+      url: '/api/v1/users',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { name: 'New User', email: 'new@test.com', password: 'Password1', role: 'student' }
     })
@@ -30,7 +30,7 @@ describe('POST /users', () => {
   it('returns 401 when no token provided', async () => {
     const res = await app.inject({
       method: 'POST',
-      url: '/users',
+      url: '/api/v1/users',
       payload: { name: 'X', email: 'x@x.com', password: 'pass123', role: 'student' }
     })
 
@@ -42,7 +42,7 @@ describe('POST /users', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/users',
+      url: '/api/v1/users',
       headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' }),
       payload: { name: 'X', email: 'x@x.com', password: 'pass123', role: 'student' }
     })
@@ -55,7 +55,7 @@ describe('POST /users', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/users',
+      url: '/api/v1/users',
       headers: bearerHeader(app, { sub: student.id, role: 'student' }),
       payload: { name: 'X', email: 'x@x.com', password: 'pass123', role: 'student' }
     })
@@ -71,7 +71,7 @@ describe('GET /users', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/users',
+      url: '/api/v1/users',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -80,7 +80,7 @@ describe('GET /users', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'GET', url: '/users' })
+    const res = await app.inject({ method: 'GET', url: '/api/v1/users' })
 
     expect(res.statusCode).toBe(401)
   })
@@ -90,7 +90,7 @@ describe('GET /users', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/users',
+      url: '/api/v1/users',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -108,7 +108,7 @@ describe('GET /users/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/users/${student.id}`,
+      url: `/api/v1/users/${student.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -121,7 +121,7 @@ describe('GET /users/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/users/non-existent-id',
+      url: '/api/v1/users/non-existent-id',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -129,7 +129,7 @@ describe('GET /users/:id', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'GET', url: '/users/any-id' })
+    const res = await app.inject({ method: 'GET', url: '/api/v1/users/any-id' })
 
     expect(res.statusCode).toBe(401)
   })
@@ -142,7 +142,7 @@ describe('PATCH /users/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/users/${student.id}`,
+      url: `/api/v1/users/${student.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { name: 'Updated Name' }
     })
@@ -157,14 +157,14 @@ describe('PATCH /users/:id', () => {
 
     await app.inject({
       method: 'PATCH',
-      url: `/users/${student.id}`,
+      url: `/api/v1/users/${student.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { password: 'BrandNew99' }
     })
 
     const loginRes = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: student.email, password: 'BrandNew99' }
     })
     expect(loginRes.statusCode).toBe(200)
@@ -175,7 +175,7 @@ describe('PATCH /users/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: '/users/non-existent',
+      url: '/api/v1/users/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { name: 'New Name' }
     })
@@ -191,7 +191,7 @@ describe('DELETE /users/:id', () => {
 
     const deleteRes = await app.inject({
       method: 'DELETE',
-      url: `/users/${student.id}`,
+      url: `/api/v1/users/${student.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -199,7 +199,7 @@ describe('DELETE /users/:id', () => {
 
     const getRes = await app.inject({
       method: 'GET',
-      url: `/users/${student.id}`,
+      url: `/api/v1/users/${student.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
     expect(getRes.statusCode).toBe(404)
@@ -210,7 +210,7 @@ describe('DELETE /users/:id', () => {
 
     const res = await app.inject({
       method: 'DELETE',
-      url: '/users/non-existent',
+      url: '/api/v1/users/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -218,7 +218,7 @@ describe('DELETE /users/:id', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'DELETE', url: '/users/any' })
+    const res = await app.inject({ method: 'DELETE', url: '/api/v1/users/any' })
 
     expect(res.statusCode).toBe(401)
   })
@@ -231,14 +231,14 @@ describe('auth: old password no longer works after update', () => {
 
     await app.inject({
       method: 'PATCH',
-      url: `/users/${student.id}`,
+      url: `/api/v1/users/${student.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { password: 'CompletelyNew99' }
     })
 
     const loginRes = await app.inject({
       method: 'POST',
-      url: '/auth/login',
+      url: '/api/v1/auth/login',
       payload: { email: student.email, password: DEFAULT_PASSWORD }
     })
     expect(loginRes.statusCode).toBe(401)

@@ -23,7 +23,7 @@ describe('POST /tasks', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: { ...bearerHeader(app, { sub: admin.id, role: 'admin' }), 'content-type': contentType },
       payload
     })
@@ -41,7 +41,7 @@ describe('POST /tasks', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: { ...bearerHeader(app, { sub: teacher.id, role: 'teacher' }), 'content-type': contentType },
       payload
     })
@@ -59,7 +59,7 @@ describe('POST /tasks', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: { ...bearerHeader(app, { sub: teacher2.id, role: 'teacher' }), 'content-type': contentType },
       payload
     })
@@ -74,7 +74,7 @@ describe('POST /tasks', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: { ...bearerHeader(app, { sub: student.id, role: 'student' }), 'content-type': contentType },
       payload
     })
@@ -92,7 +92,7 @@ describe('POST /tasks', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: { ...bearerHeader(app, { sub: admin.id, role: 'admin' }), 'content-type': contentType },
       payload
     })
@@ -101,7 +101,7 @@ describe('POST /tasks', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'POST', url: '/tasks', payload: {} })
+    const res = await app.inject({ method: 'POST', url: '/api/v1/tasks', payload: {} })
 
     expect(res.statusCode).toBe(401)
   })
@@ -117,7 +117,7 @@ describe('GET /tasks', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -141,7 +141,7 @@ describe('GET /tasks', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: bearerHeader(app, { sub: student.id, role: 'student' })
     })
 
@@ -155,7 +155,7 @@ describe('GET /tasks', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/tasks',
+      url: '/api/v1/tasks',
       headers: bearerHeader(app, { sub: student.id, role: 'student' })
     })
 
@@ -174,7 +174,7 @@ describe('GET /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/tasks/${task.id}`,
+      url: `/api/v1/tasks/${task.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -187,7 +187,7 @@ describe('GET /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/tasks/non-existent',
+      url: '/api/v1/tasks/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -206,7 +206,7 @@ describe('PATCH /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/tasks/${task.id}`,
+      url: `/api/v1/tasks/${task.id}`,
       headers: { ...bearerHeader(app, { sub: teacher.id, role: 'teacher' }), 'content-type': contentType },
       payload
     })
@@ -226,7 +226,7 @@ describe('PATCH /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/tasks/${task.id}`,
+      url: `/api/v1/tasks/${task.id}`,
       headers: { ...bearerHeader(app, { sub: teacher2.id, role: 'teacher' }), 'content-type': contentType },
       payload
     })
@@ -244,7 +244,7 @@ describe('DELETE /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'DELETE',
-      url: `/tasks/${task.id}`,
+      url: `/api/v1/tasks/${task.id}`,
       headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
     })
 
@@ -260,7 +260,7 @@ describe('DELETE /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'DELETE',
-      url: `/tasks/${task.id}`,
+      url: `/api/v1/tasks/${task.id}`,
       headers: bearerHeader(app, { sub: teacher2.id, role: 'teacher' })
     })
 
@@ -272,7 +272,7 @@ describe('DELETE /tasks/:id', () => {
 
     const res = await app.inject({
       method: 'DELETE',
-      url: '/tasks/non-existent',
+      url: '/api/v1/tasks/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 

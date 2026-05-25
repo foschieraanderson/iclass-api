@@ -23,7 +23,7 @@ describe('POST /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: { ...bearerHeader(app, { sub: student.id, role: 'student' }), 'content-type': contentType },
       payload
     })
@@ -43,7 +43,7 @@ describe('POST /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: { ...bearerHeader(app, { sub: unenrolledStudent.id, role: 'student' }), 'content-type': contentType },
       payload
     })
@@ -61,7 +61,7 @@ describe('POST /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: { ...bearerHeader(app, { sub: student.id, role: 'student' }), 'content-type': contentType },
       payload
     })
@@ -80,7 +80,7 @@ describe('POST /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: { ...bearerHeader(app, { sub: student.id, role: 'student' }), 'content-type': contentType },
       payload
     })
@@ -95,7 +95,7 @@ describe('POST /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks/non-existent/submissions',
+      url: '/api/v1/tasks/non-existent/submissions',
       headers: { ...bearerHeader(app, { sub: student.id, role: 'student' }), 'content-type': contentType },
       payload
     })
@@ -110,7 +110,7 @@ describe('POST /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/tasks/any-task/submissions',
+      url: '/api/v1/tasks/any-task/submissions',
       headers: { ...bearerHeader(app, { sub: teacher.id, role: 'teacher' }), 'content-type': contentType },
       payload
     })
@@ -129,7 +129,7 @@ describe('GET /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
     })
 
@@ -147,7 +147,7 @@ describe('GET /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: bearerHeader(app, { sub: teacher2.id, role: 'teacher' })
     })
 
@@ -163,7 +163,7 @@ describe('GET /tasks/:taskId/submissions', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/tasks/${task.id}/submissions`,
+      url: `/api/v1/tasks/${task.id}/submissions`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -183,7 +183,7 @@ describe('GET /submissions/mine', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/submissions/mine',
+      url: '/api/v1/submissions/mine',
       headers: bearerHeader(app, { sub: student1.id, role: 'student' })
     })
 
@@ -197,7 +197,7 @@ describe('GET /submissions/mine', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/submissions/mine',
+      url: '/api/v1/submissions/mine',
       headers: bearerHeader(app, { sub: student.id, role: 'student' })
     })
 
@@ -206,7 +206,7 @@ describe('GET /submissions/mine', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'GET', url: '/submissions/mine' })
+    const res = await app.inject({ method: 'GET', url: '/api/v1/submissions/mine' })
 
     expect(res.statusCode).toBe(401)
   })
@@ -222,7 +222,7 @@ describe('GET /submissions/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/submissions/${sub.id}`,
+      url: `/api/v1/submissions/${sub.id}`,
       headers: bearerHeader(app, { sub: student.id, role: 'student' })
     })
 
@@ -240,7 +240,7 @@ describe('GET /submissions/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/submissions/${sub.id}`,
+      url: `/api/v1/submissions/${sub.id}`,
       headers: bearerHeader(app, { sub: student2.id, role: 'student' })
     })
 
@@ -252,7 +252,7 @@ describe('GET /submissions/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/submissions/non-existent',
+      url: '/api/v1/submissions/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -270,7 +270,7 @@ describe('PATCH /submissions/:id (grade)', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/submissions/${sub.id}`,
+      url: `/api/v1/submissions/${sub.id}`,
       headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' }),
       payload: { grade: 85, feedback: 'Good work!' }
     })
@@ -292,7 +292,7 @@ describe('PATCH /submissions/:id (grade)', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/submissions/${sub.id}`,
+      url: `/api/v1/submissions/${sub.id}`,
       headers: bearerHeader(app, { sub: teacher2.id, role: 'teacher' }),
       payload: { grade: 70 }
     })
@@ -310,7 +310,7 @@ describe('PATCH /submissions/:id (grade)', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/submissions/${sub.id}`,
+      url: `/api/v1/submissions/${sub.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { grade: 100 }
     })
@@ -323,7 +323,7 @@ describe('PATCH /submissions/:id (grade)', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: '/submissions/any',
+      url: '/api/v1/submissions/any',
       headers: bearerHeader(app, { sub: student.id, role: 'student' }),
       payload: { grade: 50 }
     })
@@ -334,7 +334,7 @@ describe('PATCH /submissions/:id (grade)', () => {
   it('returns 401 when not authenticated', async () => {
     const res = await app.inject({
       method: 'PATCH',
-      url: '/submissions/any',
+      url: '/api/v1/submissions/any',
       payload: { grade: 50 }
     })
 

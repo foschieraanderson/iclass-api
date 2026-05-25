@@ -19,7 +19,7 @@ describe('POST /classes', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/classes',
+      url: '/api/v1/classes',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { period: '2026/1', grade: '3A', teacherId: teacher.id, studentIds: [student.id] }
     })
@@ -29,7 +29,7 @@ describe('POST /classes', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'POST', url: '/classes', payload: {} })
+    const res = await app.inject({ method: 'POST', url: '/api/v1/classes', payload: {} })
 
     expect(res.statusCode).toBe(401)
   })
@@ -39,7 +39,7 @@ describe('POST /classes', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/classes',
+      url: '/api/v1/classes',
       headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' }),
       payload: { period: '2026/1', grade: '3A', teacherId: teacher.id, studentIds: ['s1'] }
     })
@@ -53,7 +53,7 @@ describe('POST /classes', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/classes',
+      url: '/api/v1/classes',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { period: '2026/1', grade: '3A', teacherId: student.id, studentIds: [student.id] }
     })
@@ -68,7 +68,7 @@ describe('POST /classes', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/classes',
+      url: '/api/v1/classes',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { period: '2026/1', grade: '3A', teacherId: teacher.id, studentIds: [teacher2.id] }
     })
@@ -84,7 +84,7 @@ describe('POST /classes', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/classes',
+      url: '/api/v1/classes',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { period: '2026/1', grade: '3A', teacherId: teacher.id, studentIds: [student.id] }
     })
@@ -102,7 +102,7 @@ describe('GET /classes', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/classes',
+      url: '/api/v1/classes',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -112,7 +112,7 @@ describe('GET /classes', () => {
   })
 
   it('returns 401 when not authenticated', async () => {
-    const res = await app.inject({ method: 'GET', url: '/classes' })
+    const res = await app.inject({ method: 'GET', url: '/api/v1/classes' })
 
     expect(res.statusCode).toBe(401)
   })
@@ -127,7 +127,7 @@ describe('GET /classes/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: `/classes/${cls.id}`,
+      url: `/api/v1/classes/${cls.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -140,7 +140,7 @@ describe('GET /classes/:id', () => {
 
     const res = await app.inject({
       method: 'GET',
-      url: '/classes/non-existent',
+      url: '/api/v1/classes/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -157,7 +157,7 @@ describe('PATCH /classes/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/classes/${cls.id}`,
+      url: `/api/v1/classes/${cls.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { grade: '4B' }
     })
@@ -174,7 +174,7 @@ describe('PATCH /classes/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/classes/${cls.id}`,
+      url: `/api/v1/classes/${cls.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { period: '2026/1', grade: '3a' }
     })
@@ -191,7 +191,7 @@ describe('PATCH /classes/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/classes/${cls2.id}`,
+      url: `/api/v1/classes/${cls2.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
       payload: { period: '2026/1' }
     })
@@ -206,7 +206,7 @@ describe('PATCH /classes/:id', () => {
 
     const res = await app.inject({
       method: 'PATCH',
-      url: `/classes/${cls.id}`,
+      url: `/api/v1/classes/${cls.id}`,
       headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' }),
       payload: { grade: '5C' }
     })
@@ -224,7 +224,7 @@ describe('DELETE /classes/:id', () => {
 
     const res = await app.inject({
       method: 'DELETE',
-      url: `/classes/${cls.id}`,
+      url: `/api/v1/classes/${cls.id}`,
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
@@ -236,7 +236,7 @@ describe('DELETE /classes/:id', () => {
 
     const res = await app.inject({
       method: 'DELETE',
-      url: '/classes/non-existent',
+      url: '/api/v1/classes/non-existent',
       headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
     })
 
