@@ -44,6 +44,11 @@ export const classResponseSchema = z.object({
   updatedAt: z.date()
 })
 
+export const classStudentBulkSchema = z.object({
+  studentIds: z.array(z.string()).min(1, { message: 'At least one student ID is required' }).describe('Array of student UUIDs')
+})
+
 export type CreateClassDTO = z.infer<typeof createClassSchema>
 export type UpdateClassDTO = z.infer<typeof updateClassSchema>
 export type ClassParamsDTO = z.infer<typeof classParamsSchema>
+export type ClassStudentBulkDTO = z.infer<typeof classStudentBulkSchema>

@@ -5,9 +5,11 @@ import {
   listClassesController,
   getClassController,
   updateClassController,
-  deleteClassController
+  deleteClassController,
+  addStudentsController,
+  removeStudentsController
 } from '@/controllers/class.controller'
-import { createClassSchema, updateClassSchema, classParamsSchema, classResponseSchema } from '@/schemas/class.schema'
+import { createClassSchema, updateClassSchema, classParamsSchema, classResponseSchema, classStudentBulkSchema } from '@/schemas/class.schema'
 import { errorSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
@@ -119,5 +121,48 @@ export async function classRoutes(app: FastifyInstance) {
       }
     },
     deleteClassController
+  )
+
+  app.post(
+    '/:id/students',
+    {
+      onRequest: adminOnly,
+      schema: {
+        ...authHeader,
+        tags: ['Classes'],
+        summary: 'Add students to class',
+        description: 'Adds one or more students to an existing class. Already-enrolled students are ignored.',
+        params: classParamsSchema,
+        body: classStudentBulkSchema,
+        response: {
+          401: errorSchema,
+          403: errorSchema,
+          404: errorSchema,
+          422: errorSchema
+        }
+      }
+    },
+    addStudentsController
+  )
+
+  app.delete(
+    '/:id/students',
+    {
+      onRequest: adminOnly,
+      schema: {
+        ...authHeader,
+        tags: ['Classes'],
+        summary: 'Remove students from class',
+        description: 'Removes one or more students from a class. Students not enrolled are ignored.',
+        params: classParamsSchema,
+        body: classStudentBulkSchema,
+        response: {
+          401: errorSchema,
+          403: errorSchema,
+          404: errorSchema
+        }
+      }
+    },
+    removeStudentsController
   )
 }

@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { ClassService } from '@/services/class.service'
-import type { CreateClassDTO, UpdateClassDTO, ClassParamsDTO } from '@/schemas/class.schema'
+import type { CreateClassDTO, UpdateClassDTO, ClassParamsDTO, ClassStudentBulkDTO } from '@/schemas/class.schema'
 
 const service = new ClassService()
 
@@ -30,5 +30,17 @@ export async function updateClassController(request: FastifyRequest, reply: Fast
 export async function deleteClassController(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as ClassParamsDTO
   await service.delete(id)
+  return reply.status(204).send()
+}
+
+export async function addStudentsController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as ClassParamsDTO
+  await service.addStudents(id, request.body as ClassStudentBulkDTO)
+  return reply.status(204).send()
+}
+
+export async function removeStudentsController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as ClassParamsDTO
+  await service.removeStudents(id, request.body as ClassStudentBulkDTO)
   return reply.status(204).send()
 }

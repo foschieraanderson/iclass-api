@@ -243,3 +243,164 @@ describe('DELETE /classes/:id', () => {
     expect(res.statusCode).toBe(404)
   })
 })
+
+describe('POST /classes/:id/students', () => {
+  it('returns 204 when admin adds valid students', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const existing = await seedStudent()
+    const newStudent = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [existing.id] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [newStudent.id] }
+    })
+
+    expect(res.statusCode).toBe(204)
+  })
+
+  it('returns 204 when student is already enrolled (idempotent)', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [student.id] }
+    })
+
+    expect(res.statusCode).toBe(204)
+  })
+
+  it('returns 404 when class does not exist', async () => {
+    const admin = await seedAdmin()
+    const student = await seedStudent()
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/classes/non-existent/students',
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [student.id] }
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 404 when studentId does not exist', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: ['non-existent-id'] }
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 422 when user is not a student', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const teacher2 = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [teacher2.id] }
+    })
+
+    expect(res.statusCode).toBe(422)
+  })
+
+  it('returns 403 when requester is not admin', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' }),
+      payload: { studentIds: [student.id] }
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+})
+
+describe('DELETE /classes/:id/students', () => {
+  it('returns 204 when admin removes enrolled students', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [student.id] }
+    })
+
+    expect(res.statusCode).toBe(204)
+  })
+
+  it('returns 204 when student is not enrolled (idempotent)', async () => {
+    const admin = await seedAdmin()
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const otherStudent = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [otherStudent.id] }
+    })
+
+    expect(res.statusCode).toBe(204)
+  })
+
+  it('returns 404 when class does not exist', async () => {
+    const admin = await seedAdmin()
+    const student = await seedStudent()
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/classes/non-existent/students',
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' }),
+      payload: { studentIds: [student.id] }
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 403 when requester is not admin', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/classes/${cls.id}/students`,
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' }),
+      payload: { studentIds: [student.id] }
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+})

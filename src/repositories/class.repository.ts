@@ -86,6 +86,19 @@ export class ClassRepository {
     })
   }
 
+  async addStudents(classId: string, studentIds: string[]): Promise<void> {
+    await prisma.classStudent.createMany({
+      data: studentIds.map((studentId) => ({ classId, studentId })),
+      skipDuplicates: true
+    })
+  }
+
+  async removeStudents(classId: string, studentIds: string[]): Promise<void> {
+    await prisma.classStudent.deleteMany({
+      where: { classId, studentId: { in: studentIds } }
+    })
+  }
+
   async delete(id: string) {
     await prisma.class.delete({ where: { id } })
   }

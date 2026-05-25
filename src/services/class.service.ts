@@ -1,6 +1,6 @@
 import { ClassRepository } from '@/repositories/class.repository'
 import { UserRepository } from '@/repositories/user.repository'
-import type { CreateClassDTO, UpdateClassDTO } from '@/schemas/class.schema'
+import type { CreateClassDTO, UpdateClassDTO, ClassStudentBulkDTO } from '@/schemas/class.schema'
 
 const repository = new ClassRepository()
 const userRepository = new UserRepository()
@@ -75,6 +75,17 @@ export class ClassService {
     }
 
     return repository.update(id, { ...data, code })
+  }
+
+  async addStudents(classId: string, { studentIds }: ClassStudentBulkDTO): Promise<void> {
+    await this.findById(classId)
+    await this.validateStudents(studentIds)
+    await repository.addStudents(classId, studentIds)
+  }
+
+  async removeStudents(classId: string, { studentIds }: ClassStudentBulkDTO): Promise<void> {
+    await this.findById(classId)
+    await repository.removeStudents(classId, studentIds)
   }
 
   async delete(id: string) {
