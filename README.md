@@ -161,6 +161,7 @@ Rotas protegidas exigem o header `Authorization: Bearer <accessToken>`.
 |---|---|---|---|
 | `POST` | `/api/v1/users` | admin | Cria um novo usuário |
 | `GET` | `/api/v1/users` | JWT | Lista todos os usuários |
+| `GET` | `/api/v1/users/me` | JWT | Retorna os dados do próprio usuário autenticado |
 | `GET` | `/api/v1/users/:id` | JWT | Retorna um usuário pelo ID |
 | `PATCH` | `/api/v1/users/:id` | JWT | Atualiza parcialmente um usuário |
 | `DELETE` | `/api/v1/users/:id` | JWT | Remove um usuário |
@@ -181,10 +182,15 @@ Rotas protegidas exigem o header `Authorization: Bearer <accessToken>`.
 | `POST` | `/api/v1/classes` | admin | Cria uma turma com professor e alunos |
 | `GET` | `/api/v1/classes` | JWT | Lista todas as turmas |
 | `GET` | `/api/v1/classes/:id` | JWT | Retorna uma turma pelo ID |
+| `GET` | `/api/v1/classes/:id/report` | JWT | Relatório de notas da turma por aluno |
 | `PATCH` | `/api/v1/classes/:id` | admin | Atualiza turma (período, série, professor, alunos) |
 | `DELETE` | `/api/v1/classes/:id` | admin | Remove uma turma |
+| `POST` | `/api/v1/classes/:id/students` | admin | Adiciona alunos à turma (idempotente) |
+| `DELETE` | `/api/v1/classes/:id/students` | admin | Remove alunos da turma (idempotente) |
 
 O campo `code` é gerado automaticamente a partir de `period` + `grade` (ex: `"2026/1-3A"`).
+
+**Relatório de notas (`GET /classes/:id/report`):** retorna todas as tasks da turma com o status de entrega e nota de cada aluno matriculado. Teachers só podem acessar o relatório das próprias turmas; admin acessa qualquer uma.
 
 ### Tarefas
 
@@ -212,7 +218,7 @@ O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8
 
 ## Testes
 
-A suíte cobre 6 services (unitários) e 5 grupos de endpoints (integração), totalizando 144 testes.
+A suíte cobre 6 services (unitários) e 5 grupos de endpoints (integração), totalizando 163 testes.
 
 ### Pré-requisitos
 
