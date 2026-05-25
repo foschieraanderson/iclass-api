@@ -8,6 +8,10 @@ import { submissionRoutes } from './submission.route'
 import { dashboardRoutes } from './dashboard.route'
 
 export async function registerRoutes(app: FastifyInstance) {
+  app.get('/health', { schema: { hide: true } }, async (_req, reply) => {
+    return reply.send({ status: 'ok' })
+  })
+
   await app.register(
     async (v1) => {
       await v1.register(authRoutes, { prefix: '/auth' })
