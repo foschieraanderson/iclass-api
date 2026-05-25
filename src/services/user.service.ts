@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs'
 
 import { UserRepository } from '@/repositories/user.repository'
 import type { Role } from '@/database/generated/index.js'
-import type { CreateUserDTO, UpdateUserDTO } from '@/schemas/user.schema'
+import type { ChangePasswordDTO, CreateUserDTO, UpdateUserDTO } from '@/schemas/user.schema'
 
 const repository = new UserRepository()
 
@@ -41,5 +41,24 @@ export class UserService {
   async delete(id: string) {
     await this.findById(id)
     await repository.delete(id)
+  }
+
+  async changePassword(userId: string, data: ChangePasswordDTO) {
+    const user = await repository.findByIdWithPassword(userId)
+
+    if (!user) {
+      throw Object.assign(new Error('User not found'), { statusCode: 404 })
+    }
+
+    const valid = await bcrypt.compare(data.currentPassword, user.password)
+
+    if (!valid) {
+      throw Object.assign(new Error('Senha atual incorreta'), { statusCode: 400 })
+    }
+
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10)
+    await repository.update(userId, { password: hashedPassword })
+
+    return { message: 'Senha alterada com sucesso.' }
   }
 }

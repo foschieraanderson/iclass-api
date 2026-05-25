@@ -37,7 +37,13 @@ export const listUsersQuerySchema = z.object({
   role: userRoleSchema.optional().describe('Filter users by role')
 })
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).describe('Current user password'),
+  newPassword: z.string().min(6).describe('New password (min 6 characters)')
+})
+
 export type CreateUserDTO = z.infer<typeof createUserSchema>
 export type UpdateUserDTO = z.infer<typeof updateUserSchema>
 export type UserParamsDTO = z.infer<typeof userParamsSchema>
 export type ListUsersQueryDTO = z.infer<typeof listUsersQuerySchema>
+export type ChangePasswordDTO = z.infer<typeof changePasswordSchema>

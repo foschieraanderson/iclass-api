@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 
 import {
+  changePasswordController,
   createUserController,
   getMeController,
   listUsersController,
@@ -8,7 +9,7 @@ import {
   updateUserController,
   deleteUserController
 } from '@/controllers/user.controller'
-import { createUserSchema, updateUserSchema, userParamsSchema, userResponseSchema, listUsersQuerySchema } from '@/schemas/user.schema'
+import { changePasswordSchema, createUserSchema, updateUserSchema, userParamsSchema, userResponseSchema, listUsersQuerySchema } from '@/schemas/user.schema'
 import { errorSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
@@ -93,6 +94,26 @@ export async function userRoutes(app: FastifyInstance) {
       }
     },
     getUserController
+  )
+
+  app.patch(
+    '/me/password',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        ...authHeader,
+        tags: ['Users'],
+        summary: 'Change password',
+        description: 'Changes the authenticated user\'s own password.',
+        body: changePasswordSchema,
+        response: {
+          200: { type: 'object', properties: { message: { type: 'string' } } },
+          400: errorSchema,
+          401: errorSchema
+        }
+      }
+    },
+    changePasswordController
   )
 
   app.patch(

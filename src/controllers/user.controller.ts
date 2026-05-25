@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 
 import { UserService } from '@/services/user.service'
-import type { CreateUserDTO, UpdateUserDTO, UserParamsDTO, ListUsersQueryDTO } from '@/schemas/user.schema'
+import type { ChangePasswordDTO, CreateUserDTO, UpdateUserDTO, UserParamsDTO, ListUsersQueryDTO } from '@/schemas/user.schema'
 
 const service = new UserService()
 
@@ -46,4 +46,9 @@ export async function deleteUserController(
   const { id } = request.params as UserParamsDTO
   await service.delete(id)
   return reply.status(204).send()
+}
+
+export async function changePasswordController(request: FastifyRequest, reply: FastifyReply) {
+  const result = await service.changePassword(request.user.sub, request.body as ChangePasswordDTO)
+  return reply.send(result)
 }

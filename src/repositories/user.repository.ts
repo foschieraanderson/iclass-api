@@ -42,6 +42,10 @@ export class UserRepository {
     return prisma.user.findUnique({ where: { email } })
   }
 
+  async findByIdWithPassword(id: string) {
+    return prisma.user.findUnique({ where: { id } })
+  }
+
   async update(id: string, data: Partial<CreateUserData>) {
     return prisma.user.update({ where: { id }, data, select: publicSelect })
   }
