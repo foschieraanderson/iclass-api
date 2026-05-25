@@ -25,10 +25,11 @@ model User {
   enrolledClasses ClassStudent[]
   resetTokens     PasswordResetToken[]
   createdTasks    Task[]
+  taskSubmissions TaskSubmission[]
 }
 
 model Task {
-  id          String    @id
+  id          String           @id
   classId     String
   createdById String
   title       String
@@ -36,12 +37,31 @@ model Task {
   fileUrl     String?
   score       Int
   expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  class       Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
-  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy   User             @relation(fields: [createdById], references: [id])
+  submissions TaskSubmission[]
 
   @@index([classId])
+}
+
+model TaskSubmission {
+  id         String    @id
+  taskId     String
+  studentId  String
+  textAnswer String?
+  fileUrl    String?
+  grade      Int?
+  feedback   String?
+  gradedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  student    User      @relation(fields: [studentId], references: [id])
+
+  @@unique([taskId, studentId])
+  @@index([studentId])
 }
 
 model PasswordResetToken {
