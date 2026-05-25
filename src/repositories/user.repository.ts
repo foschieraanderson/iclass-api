@@ -10,7 +10,7 @@ export interface CreateUserData {
   role: Role
 }
 
-const publicSelect = {
+export const publicSelect = {
   id: true,
   name: true,
   email: true,
