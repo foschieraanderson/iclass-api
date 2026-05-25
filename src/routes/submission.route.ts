@@ -2,10 +2,11 @@ import { FastifyInstance } from 'fastify'
 
 import {
   listMineController,
+  getStudentReportController,
   getSubmissionController,
   gradeSubmissionController
 } from '@/controllers/submission.controller'
-import { submissionParamsSchema, gradeSubmissionSchema, submissionResponseSchema } from '@/schemas/submission.schema'
+import { submissionParamsSchema, gradeSubmissionSchema, submissionResponseSchema, studentTaskReportSchema } from '@/schemas/submission.schema'
 import { errorSchema } from '@/schemas/common.schema'
 import { requireRole } from '@/middlewares/require-role'
 
@@ -13,6 +14,7 @@ const authHeader = { security: [{ bearerAuth: [] }] }
 
 export async function submissionRoutes(app: FastifyInstance) {
   const teacherOrAdmin = [app.authenticate, requireRole('teacher', 'admin')]
+  const studentOnly = [app.authenticate, requireRole('student')]
 
   app.get('/mine', {
     onRequest: [app.authenticate],
@@ -27,6 +29,21 @@ export async function submissionRoutes(app: FastifyInstance) {
       }
     }
   }, listMineController)
+
+  app.get('/report', {
+    onRequest: studentOnly,
+    schema: {
+      ...authHeader,
+      tags: ['Submissions'],
+      summary: 'Student task report',
+      description: 'Returns a consolidated report of all tasks for the authenticated student: submitted, pending, expired, on time, and late.',
+      response: {
+        200: studentTaskReportSchema,
+        401: errorSchema,
+        403: errorSchema
+      }
+    }
+  }, getStudentReportController)
 
   app.get('/:id', {
     onRequest: [app.authenticate],

@@ -43,6 +43,11 @@ export async function getSubmissionController(request: FastifyRequest, reply: Fa
   return reply.send(submission)
 }
 
+export async function getStudentReportController(request: FastifyRequest, reply: FastifyReply) {
+  const report = await service.getStudentReport(request.user.sub)
+  return reply.send(report)
+}
+
 export async function gradeSubmissionController(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as SubmissionParamsDTO
   const submission = await service.grade(id, request.body as GradeSubmissionDTO, request.user.sub, request.user.role)

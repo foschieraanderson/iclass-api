@@ -56,6 +56,38 @@ export class SubmissionService {
     return repository.findById(id)
   }
 
+  async getStudentReport(studentId: string) {
+    const tasks = await taskRepository.findAllForStudentWithSubmissions(studentId)
+    const now = new Date()
+
+    const items = tasks.map((task) => {
+      const sub = task.submissions[0] ?? null
+      const expired = !!task.expiresAt && task.expiresAt <= now
+      const status = sub ? 'submitted' : expired ? 'expired' : 'pending'
+      const onTime = sub ? (!task.expiresAt || sub.createdAt <= task.expiresAt!) : null
+      return {
+        task: { id: task.id, title: task.title, score: task.score, expiresAt: task.expiresAt, class: task.class },
+        status,
+        onTime,
+        submission: sub ? { id: sub.id, grade: sub.grade, gradedAt: sub.gradedAt, createdAt: sub.createdAt } : null
+      }
+    })
+
+    const summary = {
+      total: items.length,
+      submitted: items.filter((i) => i.status === 'submitted').length,
+      pending: items.filter((i) => i.status === 'pending').length,
+      expired: items.filter((i) => i.status === 'expired').length,
+      onTime: items.filter((i) => i.onTime === true).length,
+      late: items.filter((i) => i.onTime === false).length,
+      graded: items.filter((i) => i.submission?.grade != null).length,
+      totalEarned: items.reduce((sum, i) => sum + (i.submission?.grade ?? 0), 0),
+      totalPossible: items.reduce((sum, i) => sum + i.task.score, 0)
+    }
+
+    return { summary, tasks: items }
+  }
+
   async grade(id: string, data: GradeSubmissionDTO, requesterId: string, requesterRole: string) {
     const submission = await repository.findByIdWithClass(id)
     if (!submission) throw Object.assign(new Error('Submission not found'), { statusCode: 404 })

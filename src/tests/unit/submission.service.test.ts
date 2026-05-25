@@ -11,7 +11,8 @@ const mockSubRepo = vi.hoisted(() => ({
 }))
 
 const mockTaskRepo = vi.hoisted(() => ({
-  findByIdWithClass: vi.fn()
+  findByIdWithClass: vi.fn(),
+  findAllForStudentWithSubmissions: vi.fn()
 }))
 
 const mockPrisma = vi.hoisted(() => ({
@@ -143,6 +144,99 @@ describe('SubmissionService', () => {
       mockSubRepo.findByIdWithClass.mockResolvedValue(submission)
 
       await expect(service.findById('sub1', otherTeacherId, 'teacher')).rejects.toMatchObject({ statusCode: 403 })
+    })
+  })
+
+  describe('getStudentReport', () => {
+    const future = new Date(Date.now() + 86400_000)
+    const past = new Date(Date.now() - 86400_000)
+
+    const makeTask = (id: string, score: number, expiresAt: Date | null, sub: { id: string; createdAt: Date; grade: number | null; gradedAt: Date | null } | null) => ({
+      id, title: `Task ${id}`, score, expiresAt, class: { id: 'c1', code: '2026/1-3A' },
+      submissions: sub ? [sub] : []
+    })
+
+    it('marks submitted + onTime when submitted before deadline', async () => {
+      const subDate = new Date(past.getTime() + 1000)
+      mockTaskRepo.findAllForStudentWithSubmissions.mockResolvedValue([
+        makeTask('t1', 10, future, { id: 's1', createdAt: new Date(), grade: null, gradedAt: null })
+      ])
+
+      const { tasks, summary } = await service.getStudentReport('student1')
+
+      expect(tasks[0].status).toBe('submitted')
+      expect(tasks[0].onTime).toBe(true)
+      expect(summary.submitted).toBe(1)
+      expect(summary.onTime).toBe(1)
+    })
+
+    it('marks submitted + late when submitted after deadline', async () => {
+      const deadline = new Date(Date.now() - 3600_000)
+      const subDate = new Date(Date.now() - 1800_000)
+      mockTaskRepo.findAllForStudentWithSubmissions.mockResolvedValue([
+        makeTask('t1', 5, deadline, { id: 's1', createdAt: subDate, grade: null, gradedAt: null })
+      ])
+
+      const { tasks, summary } = await service.getStudentReport('student1')
+
+      expect(tasks[0].status).toBe('submitted')
+      expect(tasks[0].onTime).toBe(false)
+      expect(summary.late).toBe(1)
+    })
+
+    it('marks submitted + onTime when task has no deadline', async () => {
+      mockTaskRepo.findAllForStudentWithSubmissions.mockResolvedValue([
+        makeTask('t1', 8, null, { id: 's1', createdAt: new Date(), grade: null, gradedAt: null })
+      ])
+
+      const { tasks } = await service.getStudentReport('student1')
+
+      expect(tasks[0].status).toBe('submitted')
+      expect(tasks[0].onTime).toBe(true)
+    })
+
+    it('marks pending when no submission and deadline is in the future', async () => {
+      mockTaskRepo.findAllForStudentWithSubmissions.mockResolvedValue([
+        makeTask('t1', 3, future, null)
+      ])
+
+      const { tasks, summary } = await service.getStudentReport('student1')
+
+      expect(tasks[0].status).toBe('pending')
+      expect(tasks[0].onTime).toBeNull()
+      expect(summary.pending).toBe(1)
+    })
+
+    it('marks expired when no submission and deadline has passed', async () => {
+      mockTaskRepo.findAllForStudentWithSubmissions.mockResolvedValue([
+        makeTask('t1', 5, past, null)
+      ])
+
+      const { tasks, summary } = await service.getStudentReport('student1')
+
+      expect(tasks[0].status).toBe('expired')
+      expect(tasks[0].onTime).toBeNull()
+      expect(summary.expired).toBe(1)
+    })
+
+    it('calculates summary counts correctly', async () => {
+      const gradedAt = new Date()
+      mockTaskRepo.findAllForStudentWithSubmissions.mockResolvedValue([
+        makeTask('t1', 10, future, { id: 's1', createdAt: new Date(), grade: 8, gradedAt }),   // submitted, onTime, graded
+        makeTask('t2', 5, past, { id: 's2', createdAt: new Date(), grade: null, gradedAt: null }),  // submitted, late (sub after deadline, same time reference)
+        makeTask('t3', 3, future, null),                                                             // pending
+        makeTask('t4', 8, past, null)                                                               // expired
+      ])
+
+      const { summary } = await service.getStudentReport('student1')
+
+      expect(summary.total).toBe(4)
+      expect(summary.submitted).toBe(2)
+      expect(summary.pending).toBe(1)
+      expect(summary.expired).toBe(1)
+      expect(summary.graded).toBe(1)
+      expect(summary.totalEarned).toBe(8)
+      expect(summary.totalPossible).toBe(26)
     })
   })
 

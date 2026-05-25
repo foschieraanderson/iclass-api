@@ -62,6 +62,24 @@ export class TaskRepository {
     })
   }
 
+  async findAllForStudentWithSubmissions(studentId: string) {
+    return prisma.task.findMany({
+      where: { class: { students: { some: { studentId } } } },
+      select: {
+        id: true,
+        title: true,
+        score: true,
+        expiresAt: true,
+        class: { select: { id: true, code: true } },
+        submissions: {
+          where: { studentId },
+          select: { id: true, grade: true, gradedAt: true, createdAt: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+  }
+
   async findById(id: string) {
     return prisma.task.findUnique({ where: { id }, select: taskSelect })
   }

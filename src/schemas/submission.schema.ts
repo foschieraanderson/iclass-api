@@ -46,6 +46,41 @@ export const submissionResponseSchema = z.object({
   student: userResponseSchema
 })
 
+const reportTaskRefSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  score: z.number(),
+  expiresAt: z.date().nullable(),
+  class: z.object({ id: z.string(), code: z.string() })
+})
+
+const reportItemSchema = z.object({
+  task: reportTaskRefSchema,
+  status: z.enum(['submitted', 'pending', 'expired']),
+  onTime: z.boolean().nullable(),
+  submission: z.object({
+    id: z.string(),
+    grade: z.number().nullable(),
+    gradedAt: z.date().nullable(),
+    createdAt: z.date()
+  }).nullable()
+})
+
+export const studentTaskReportSchema = z.object({
+  summary: z.object({
+    total: z.number(),
+    submitted: z.number(),
+    pending: z.number(),
+    expired: z.number(),
+    onTime: z.number(),
+    late: z.number(),
+    graded: z.number(),
+    totalEarned: z.number(),
+    totalPossible: z.number()
+  }),
+  tasks: z.array(reportItemSchema)
+})
+
 export type CreateSubmissionDTO = z.infer<typeof createSubmissionSchema>
 export type GradeSubmissionDTO = z.infer<typeof gradeSubmissionSchema>
 export type SubmissionParamsDTO = z.infer<typeof submissionParamsSchema>

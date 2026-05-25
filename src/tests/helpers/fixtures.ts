@@ -77,7 +77,8 @@ export async function seedTask(opts: SeedTaskOptions) {
       classId: opts.classId,
       createdById: opts.createdById,
       title: opts.title ?? 'Test Task',
-      score: opts.score ?? 5
+      score: opts.score ?? 5,
+      expiresAt: opts.expiresAt
     }
   })
 }

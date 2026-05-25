@@ -260,6 +260,95 @@ describe('GET /submissions/:id', () => {
   })
 })
 
+describe('GET /submissions/report', () => {
+  it('returns 200 with summary and tasks array for authenticated student', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+    await seedTask({ classId: cls.id, createdById: teacher.id })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/submissions/report',
+      headers: bearerHeader(app, { sub: student.id, role: 'student' })
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body).toHaveProperty('summary')
+    expect(body).toHaveProperty('tasks')
+    expect(body.summary.total).toBe(1)
+  })
+
+  it('counts submitted task correctly', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+    const task = await seedTask({ classId: cls.id, createdById: teacher.id, expiresAt: new Date(Date.now() + 86400_000) })
+    await seedSubmission({ taskId: task.id, studentId: student.id })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/submissions/report',
+      headers: bearerHeader(app, { sub: student.id, role: 'student' })
+    })
+
+    const { summary, tasks } = res.json()
+    expect(summary.submitted).toBe(1)
+    expect(summary.pending).toBe(0)
+    expect(tasks[0].status).toBe('submitted')
+    expect(tasks[0].onTime).toBe(true)
+  })
+
+  it('marks expired when no submission and deadline passed', async () => {
+    const teacher = await seedTeacher()
+    const student = await seedStudent()
+    const cls = await seedClass({ teacherId: teacher.id, studentIds: [student.id] })
+    await seedTask({ classId: cls.id, createdById: teacher.id, expiresAt: new Date(Date.now() - 86400_000) })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/submissions/report',
+      headers: bearerHeader(app, { sub: student.id, role: 'student' })
+    })
+
+    const { summary, tasks } = res.json()
+    expect(summary.expired).toBe(1)
+    expect(tasks[0].status).toBe('expired')
+    expect(tasks[0].onTime).toBeNull()
+    expect(tasks[0].submission).toBeNull()
+  })
+
+  it('returns 403 for teacher', async () => {
+    const teacher = await seedTeacher()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/submissions/report',
+      headers: bearerHeader(app, { sub: teacher.id, role: 'teacher' })
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('returns 403 for admin', async () => {
+    const admin = await seedAdmin()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/submissions/report',
+      headers: bearerHeader(app, { sub: admin.id, role: 'admin' })
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('returns 401 when not authenticated', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/v1/submissions/report' })
+    expect(res.statusCode).toBe(401)
+  })
+})
+
 describe('PATCH /submissions/:id (grade)', () => {
   it('returns 200 with grade and gradedAt set for teacher of the class', async () => {
     const teacher = await seedTeacher()
