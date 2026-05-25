@@ -160,11 +160,21 @@ Rotas protegidas exigem o header `Authorization: Bearer <accessToken>`.
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | `POST` | `/api/v1/users` | admin | Cria um novo usuário |
-| `GET` | `/api/v1/users` | JWT | Lista todos os usuários |
+| `GET` | `/api/v1/users` | JWT | Lista todos os usuários (filtro opcional: `?role=teacher\|student\|admin`) |
 | `GET` | `/api/v1/users/me` | JWT | Retorna os dados do próprio usuário autenticado |
 | `GET` | `/api/v1/users/:id` | JWT | Retorna um usuário pelo ID |
 | `PATCH` | `/api/v1/users/:id` | JWT | Atualiza parcialmente um usuário |
 | `DELETE` | `/api/v1/users/:id` | JWT | Remove um usuário |
+
+**Filtro de listagem:** o parâmetro `role` é opcional. Valores inválidos retornam `400`.
+
+```bash
+# Listar apenas professores
+curl -H "Authorization: Bearer <token>" "http://localhost:3000/api/v1/users?role=teacher"
+
+# Listar apenas alunos
+curl -H "Authorization: Bearer <token>" "http://localhost:3000/api/v1/users?role=student"
+```
 
 **Campos do usuário:**
 
