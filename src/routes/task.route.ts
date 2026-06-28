@@ -5,7 +5,8 @@ import {
   listTasksController,
   getTaskController,
   updateTaskController,
-  deleteTaskController
+  deleteTaskController,
+  downloadTaskFileController
 } from '@/controllers/task.controller'
 import { createSubmissionController, listTaskSubmissionsController } from '@/controllers/submission.controller'
 import { taskParamsSchema, taskQuerySchema, taskResponseSchema } from '@/schemas/task.schema'
@@ -51,6 +52,21 @@ export async function taskRoutes(app: FastifyInstance) {
       }
     }
   }, listTasksController)
+
+  app.get('/:id/file', {
+    onRequest: [app.authenticate],
+    schema: {
+      ...authHeader,
+      tags: ['Tasks'],
+      summary: 'Download task file',
+      description: 'Downloads the PDF attached to a task. Requires authentication.',
+      params: taskParamsSchema,
+      response: {
+        401: errorSchema,
+        404: errorSchema
+      }
+    }
+  }, downloadTaskFileController)
 
   app.get('/:id', {
     onRequest: [app.authenticate],

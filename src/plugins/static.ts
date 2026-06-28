@@ -11,6 +11,7 @@ export const staticPlugin = fp(async (app: FastifyInstance) => {
 
   await app.register(staticFiles, {
     root: UPLOAD_DIR,
-    prefix: '/uploads'
+    prefix: '/uploads',
+    serve: false
   })
 })

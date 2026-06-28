@@ -1,3 +1,5 @@
+import path from 'path'
+
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { ZodError } from 'zod'
 
@@ -65,4 +67,17 @@ export async function deleteTaskController(request: FastifyRequest, reply: Fasti
   const { id } = request.params as TaskParamsDTO
   await service.delete(id, request.user.sub, request.user.role)
   return reply.status(204).send()
+}
+
+export async function downloadTaskFileController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as TaskParamsDTO
+  const task = await service.findById(id)
+
+  if (!task.fileUrl) {
+    throw Object.assign(new Error('Esta tarefa não possui arquivo'), { statusCode: 404 })
+  }
+
+  const filename = path.basename(task.fileUrl)
+  reply.header('Content-Disposition', `attachment; filename="${filename}"`)
+  return reply.sendFile(filename)
 }
