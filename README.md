@@ -71,7 +71,15 @@ docker compose up -d
 pnpm db:migrate
 ```
 
-### 6. Inicie o servidor
+### 6. Crie o primeiro usuário
+
+```bash
+pnpm cli:create-user
+```
+
+A CLI é interativa: solicita nome, email, senha e role via terminal.
+
+### 7. Inicie o servidor
 
 ```bash
 pnpm dev
@@ -100,6 +108,7 @@ A documentação interativa em `http://localhost:3000/docs`.
 | `pnpm test:coverage` | Gera relatório de cobertura em `coverage/` |
 | `pnpm db:test:push` | Sincroniza o schema Drizzle no banco de teste |
 | `pnpm db:test:reset` | Recria o schema no banco de teste (destrói dados) |
+| `pnpm cli:create-user` | Cria interativamente o primeiro usuário no banco |
 
 ---
 
@@ -291,6 +300,8 @@ pnpm test:coverage      # com relatório de cobertura
 iclass-api/
 ├── compose.yml               # Docker Compose (PostgreSQL)
 ├── drizzle.config.ts         # Configuração do Drizzle Kit
+├── cli/
+│   └── create-user.ts        # CLI interativa para criar o primeiro usuário
 ├── vitest.config.ts          # Configuração do Vitest
 ├── .env.test                 # Variáveis de ambiente para testes
 ├── database/
