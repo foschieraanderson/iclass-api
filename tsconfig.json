@@ -15,5 +15,8 @@
     "ignoreDeprecations": "6.0"
   },
   "include": ["src"],
-  "exclude": ["src/tests"]
+  "exclude": ["src/tests"],
+  "tsc-alias": {
+    "resolveFullPaths": true
+  }
 }
