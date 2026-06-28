@@ -5,7 +5,7 @@ REST API da plataforma iClass — gerencia usuários, turmas e recursos relacion
 ## Tecnologias
 
 - **[Fastify](https://fastify.dev/)** — framework HTTP de alta performance
-- **[Prisma](https://www.prisma.io/)** — ORM com type-safety e migrations
+- **[Drizzle ORM](https://orm.drizzle.team/)** — ORM type-safe com SQL explícito e migrations
 - **[PostgreSQL](https://www.postgresql.org/)** — banco de dados relacional
 - **[Zod](https://zod.dev/)** — validação de schemas em runtime e inferência de tipos
 - **[JWT](https://jwt.io/)** — autenticação via `@fastify/jwt`
@@ -33,8 +33,6 @@ cd iclass-api
 ```bash
 pnpm install
 ```
-
-> O `postinstall` executa `prisma generate` automaticamente.
 
 ### 3. Configure as variáveis de ambiente
 
@@ -92,16 +90,16 @@ A documentação interativa em `http://localhost:3000/docs`.
 | `pnpm build` | Compila o TypeScript para `dist/` |
 | `pnpm start` | Inicia o servidor compilado (`dist/server.js`) |
 | `pnpm lint` | Executa o ESLint |
-| `pnpm db:migrate` | Cria e aplica migrations pendentes |
-| `pnpm db:generate` | Gera o cliente Prisma a partir do schema |
-| `pnpm db:studio` | Abre o Prisma Studio (interface visual do banco) |
+| `pnpm db:generate` | Gera arquivos de migration a partir do schema Drizzle |
+| `pnpm db:migrate` | Aplica migrations pendentes no banco |
+| `pnpm db:studio` | Abre o Drizzle Studio (interface visual do banco) |
 | `pnpm test` | Roda toda a suíte de testes (unitários + integração) |
-| `pnpm test:unit` | Roda apenas os testes unitários |
-| `pnpm test:integration` | Roda apenas os testes de integração |
+| `pnpm test:unit` | Roda apenas os testes unitários (sem banco) |
+| `pnpm test:integration` | Roda apenas os testes de integração (requer banco de teste) |
 | `pnpm test:watch` | Modo watch para desenvolvimento |
 | `pnpm test:coverage` | Gera relatório de cobertura em `coverage/` |
-| `pnpm db:test:migrate` | Aplica migrations no banco de teste (`iclass_test`) |
-| `pnpm db:test:reset` | Reseta o banco de teste |
+| `pnpm db:test:push` | Sincroniza o schema Drizzle no banco de teste |
+| `pnpm db:test:reset` | Recria o schema no banco de teste (destrói dados) |
 
 ---
 
@@ -253,12 +251,17 @@ A resposta varia conforme o `role` do token JWT:
 
 A suíte cobre 7 services (unitários) e 6 grupos de endpoints (integração), totalizando 202 testes.
 
-### Pré-requisitos
+### Pré-requisitos para testes de integração
 
 ```bash
-# criar banco de teste e aplicar migrations
+# 1. Criar banco de teste (exemplo com psql)
 createdb iclass_test
-pnpm db:test:migrate
+
+# 2. Criar .env.test com a URL do banco de teste
+echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/iclass_test" > .env.test
+
+# 3. Sincronizar o schema Drizzle no banco de teste
+pnpm db:test:push
 ```
 
 ### Rodando os testes
@@ -287,12 +290,11 @@ pnpm test:coverage      # com relatório de cobertura
 ```
 iclass-api/
 ├── compose.yml               # Docker Compose (PostgreSQL)
-├── prisma.config.ts          # Configuração do Prisma CLI (Prisma 7)
+├── drizzle.config.ts         # Configuração do Drizzle Kit
 ├── vitest.config.ts          # Configuração do Vitest
 ├── .env.test                 # Variáveis de ambiente para testes
 ├── database/
-│   ├── schema.prisma         # Schema do banco de dados
-│   └── migrations/           # Histórico de migrations
+│   └── migrations/           # Migrations geradas pelo Drizzle Kit
 └── src/
     ├── server.ts             # Bootstrap e graceful shutdown
     ├── app.ts                # Instância do Fastify, plugins e buildApp() para testes
@@ -352,7 +354,8 @@ iclass-api/
     │   ├── submission.schema.ts
     │   └── dashboard.schema.ts
     ├── database/
-    │   └── prisma.ts         # Singleton do PrismaClient
+    │   ├── schema.ts         # Schema Drizzle (tabelas, enum, relations)
+    │   └── db.ts             # Singleton do cliente Drizzle
     └── tests/
         ├── setup.ts                        # Carrega .env.test antes dos testes
         ├── helpers/

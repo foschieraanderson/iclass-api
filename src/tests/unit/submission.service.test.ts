@@ -15,8 +15,13 @@ const mockTaskRepo = vi.hoisted(() => ({
   findAllForStudentWithSubmissions: vi.fn()
 }))
 
-const mockPrisma = vi.hoisted(() => ({
-  classStudent: { findUnique: vi.fn() }
+const mockDbLimit = vi.hoisted(() => vi.fn())
+const mockDb = vi.hoisted(() => ({
+  select: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({ limit: mockDbLimit })
+    })
+  })
 }))
 
 vi.mock('@/repositories/submission.repository', () => ({
@@ -27,9 +32,7 @@ vi.mock('@/repositories/task.repository', () => ({
   TaskRepository: vi.fn().mockImplementation(function () { return mockTaskRepo })
 }))
 
-vi.mock('@/database/prisma', () => ({
-  prisma: mockPrisma
-}))
+vi.mock('@/database/db', () => ({ db: mockDb }))
 
 import { SubmissionService } from '@/services/submission.service'
 
@@ -66,7 +69,7 @@ describe('SubmissionService', () => {
 
     it('throws 403 when student is not enrolled in the task class', async () => {
       mockTaskRepo.findByIdWithClass.mockResolvedValue(task)
-      mockPrisma.classStudent.findUnique.mockResolvedValue(null)
+      mockDbLimit.mockResolvedValue([])
 
       await expect(
         service.create('task1', 'answer', undefined, studentId)
@@ -75,7 +78,7 @@ describe('SubmissionService', () => {
 
     it('throws 409 when student already has a submission for this task', async () => {
       mockTaskRepo.findByIdWithClass.mockResolvedValue(task)
-      mockPrisma.classStudent.findUnique.mockResolvedValue({ classId: 'c1', studentId })
+      mockDbLimit.mockResolvedValue([{ classId: 'c1' }])
       mockSubRepo.findByTaskAndStudent.mockResolvedValue({ id: 'existing' })
 
       await expect(
@@ -85,7 +88,7 @@ describe('SubmissionService', () => {
 
     it('calls repository.create with correct args when all checks pass', async () => {
       mockTaskRepo.findByIdWithClass.mockResolvedValue(task)
-      mockPrisma.classStudent.findUnique.mockResolvedValue({ classId: 'c1', studentId })
+      mockDbLimit.mockResolvedValue([{ classId: 'c1' }])
       mockSubRepo.findByTaskAndStudent.mockResolvedValue(null)
       mockSubRepo.create.mockResolvedValue({ id: 'sub1' })
 

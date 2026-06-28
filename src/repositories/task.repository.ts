@@ -1,9 +1,19 @@
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 
-import { prisma } from '@/database/prisma'
-import { publicSelect as publicUserSelect } from '@/repositories/user.repository'
+import { db } from '@/database/db'
+import { classStudents, tasks } from '@/database/schema'
 
-const taskSelect = {
+const publicUserColumns = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+} as const
+
+const taskColumns = {
   id: true,
   classId: true,
   title: true,
@@ -13,8 +23,11 @@ const taskSelect = {
   expiresAt: true,
   createdAt: true,
   updatedAt: true,
-  class: { select: { id: true, code: true, period: true, grade: true } },
-  createdBy: { select: publicUserSelect }
+} as const
+
+const taskRelations = {
+  class: { columns: { id: true, code: true, period: true, grade: true } },
+  createdBy: { columns: publicUserColumns },
 } as const
 
 export interface CreateTaskData {
@@ -37,81 +50,95 @@ export interface UpdateTaskData {
 
 export class TaskRepository {
   async create(data: CreateTaskData) {
-    return prisma.task.create({
-      data: { id: uuidv7(), ...data },
-      select: taskSelect
+    const [{ id }] = await db
+      .insert(tasks)
+      .values({ id: uuidv7(), ...data })
+      .returning({ id: tasks.id })
+
+    return db.query.tasks.findFirst({
+      where: eq(tasks.id, id),
+      columns: taskColumns,
+      with: taskRelations,
     })
   }
 
   async findAll(classId?: string) {
-    return prisma.task.findMany({
-      where: classId ? { classId } : undefined,
-      select: taskSelect,
-      orderBy: { createdAt: 'desc' }
+    return db.query.tasks.findMany({
+      where: classId ? eq(tasks.classId, classId) : undefined,
+      columns: taskColumns,
+      with: taskRelations,
+      orderBy: [desc(tasks.createdAt)],
     })
   }
 
   async findAllForStudent(studentId: string, classId?: string) {
-    return prisma.task.findMany({
-      where: {
-        ...(classId ? { classId } : {}),
-        class: { students: { some: { studentId } } }
-      },
-      select: taskSelect,
-      orderBy: { createdAt: 'desc' }
+    const enrolledClassIds = db
+      .select({ classId: classStudents.classId })
+      .from(classStudents)
+      .where(eq(classStudents.studentId, studentId))
+
+    return db.query.tasks.findMany({
+      where: (t, { and, inArray, eq: eqFn }) =>
+        and(inArray(t.classId, enrolledClassIds), classId ? eqFn(t.classId, classId) : undefined),
+      columns: taskColumns,
+      with: taskRelations,
+      orderBy: [desc(tasks.createdAt)],
     })
   }
 
   async findAllForStudentWithSubmissions(studentId: string) {
-    return prisma.task.findMany({
-      where: { class: { students: { some: { studentId } } } },
-      select: {
-        id: true,
-        title: true,
-        score: true,
-        expiresAt: true,
-        class: { select: { id: true, code: true } },
+    const enrolledClassIds = db
+      .select({ classId: classStudents.classId })
+      .from(classStudents)
+      .where(eq(classStudents.studentId, studentId))
+
+    return db.query.tasks.findMany({
+      where: (t, { inArray: inArrayFn }) => inArrayFn(t.classId, enrolledClassIds),
+      columns: { id: true, title: true, score: true, expiresAt: true },
+      with: {
+        class: { columns: { id: true, code: true } },
         submissions: {
-          where: { studentId },
-          select: { id: true, grade: true, gradedAt: true, createdAt: true }
-        }
+          where: (s, { eq: eqFn }) => eqFn(s.studentId, studentId),
+          columns: { id: true, grade: true, gradedAt: true, createdAt: true },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: [desc(tasks.createdAt)],
     })
   }
 
   async findById(id: string) {
-    return prisma.task.findUnique({ where: { id }, select: taskSelect })
+    return db.query.tasks.findFirst({
+      where: eq(tasks.id, id),
+      columns: taskColumns,
+      with: taskRelations,
+    })
   }
 
   async findByIdWithClass(id: string) {
-    return prisma.task.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        classId: true,
-        title: true,
-        description: true,
-        fileUrl: true,
-        score: true,
-        expiresAt: true,
-        createdAt: true,
-        updatedAt: true,
-        class: { select: { id: true, code: true, period: true, grade: true, teacherId: true } },
-        createdBy: { select: publicUserSelect }
-      }
+    return db.query.tasks.findFirst({
+      where: eq(tasks.id, id),
+      columns: taskColumns,
+      with: {
+        class: { columns: { id: true, code: true, period: true, grade: true, teacherId: true } },
+        createdBy: { columns: publicUserColumns },
+      },
     })
   }
 
   async update(id: string, data: UpdateTaskData) {
-    return prisma.task.update({
-      where: { id },
-      data,
-      select: taskSelect
+    await db
+      .update(tasks)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(tasks.id, id))
+
+    return db.query.tasks.findFirst({
+      where: eq(tasks.id, id),
+      columns: taskColumns,
+      with: taskRelations,
     })
   }
 
   async delete(id: string) {
-    await prisma.task.delete({ where: { id } })
+    await db.delete(tasks).where(eq(tasks.id, id))
   }
 }

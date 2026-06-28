@@ -1,9 +1,19 @@
+import { and, asc, desc, eq, isNull } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 
-import { prisma } from '@/database/prisma'
-import { publicSelect as publicUserSelect } from '@/repositories/user.repository'
+import { db } from '@/database/db'
+import { taskSubmissions } from '@/database/schema'
 
-const submissionSelect = {
+const publicUserColumns = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+} as const
+
+const submissionColumns = {
   id: true,
   taskId: true,
   studentId: true,
@@ -14,76 +24,89 @@ const submissionSelect = {
   gradedAt: true,
   createdAt: true,
   updatedAt: true,
-  task: {
-    select: {
-      id: true,
-      title: true,
-      score: true,
-      expiresAt: true,
-      class: { select: { id: true, code: true } }
-    }
-  },
-  student: { select: publicUserSelect }
 } as const
 
-const submissionWithClassSelect = {
-  ...submissionSelect,
+const submissionRelations = {
   task: {
-    select: {
-      id: true,
-      title: true,
-      score: true,
-      expiresAt: true,
-      classId: true,
-      class: { select: { id: true, code: true, teacherId: true } }
-    }
-  }
+    columns: { id: true, title: true, score: true, expiresAt: true },
+    with: { class: { columns: { id: true, code: true } } },
+  },
+  student: { columns: publicUserColumns },
+} as const
+
+const submissionWithClassRelations = {
+  task: {
+    columns: { id: true, title: true, score: true, expiresAt: true, classId: true },
+    with: { class: { columns: { id: true, code: true, teacherId: true } } },
+  },
+  student: { columns: publicUserColumns },
 } as const
 
 export class SubmissionRepository {
   async create(taskId: string, studentId: string, textAnswer?: string, fileUrl?: string) {
-    return prisma.taskSubmission.create({
-      data: { id: uuidv7(), taskId, studentId, textAnswer, fileUrl },
-      select: submissionSelect
+    const [{ id }] = await db
+      .insert(taskSubmissions)
+      .values({ id: uuidv7(), taskId, studentId, textAnswer, fileUrl })
+      .returning({ id: taskSubmissions.id })
+
+    return db.query.taskSubmissions.findFirst({
+      where: eq(taskSubmissions.id, id),
+      columns: submissionColumns,
+      with: submissionRelations,
     })
   }
 
   async findByTaskId(taskId: string) {
-    return prisma.taskSubmission.findMany({
-      where: { taskId },
-      select: submissionSelect,
-      orderBy: { createdAt: 'asc' }
+    return db.query.taskSubmissions.findMany({
+      where: eq(taskSubmissions.taskId, taskId),
+      columns: submissionColumns,
+      with: submissionRelations,
+      orderBy: [asc(taskSubmissions.createdAt)],
     })
   }
 
   async findByStudentId(studentId: string) {
-    return prisma.taskSubmission.findMany({
-      where: { studentId },
-      select: submissionSelect,
-      orderBy: { createdAt: 'desc' }
+    return db.query.taskSubmissions.findMany({
+      where: eq(taskSubmissions.studentId, studentId),
+      columns: submissionColumns,
+      with: submissionRelations,
+      orderBy: [desc(taskSubmissions.createdAt)],
     })
   }
 
   async findById(id: string) {
-    return prisma.taskSubmission.findUnique({ where: { id }, select: submissionSelect })
+    return db.query.taskSubmissions.findFirst({
+      where: eq(taskSubmissions.id, id),
+      columns: submissionColumns,
+      with: submissionRelations,
+    })
   }
 
   async findByIdWithClass(id: string) {
-    return prisma.taskSubmission.findUnique({ where: { id }, select: submissionWithClassSelect })
+    return db.query.taskSubmissions.findFirst({
+      where: eq(taskSubmissions.id, id),
+      columns: submissionColumns,
+      with: submissionWithClassRelations,
+    })
   }
 
   async findByTaskAndStudent(taskId: string, studentId: string) {
-    return prisma.taskSubmission.findUnique({
-      where: { taskId_studentId: { taskId, studentId } },
-      select: { id: true }
+    return db.query.taskSubmissions.findFirst({
+      where: and(eq(taskSubmissions.taskId, taskId), eq(taskSubmissions.studentId, studentId)),
+      columns: { id: true },
     })
   }
 
   async grade(id: string, grade: number, feedback?: string) {
-    return prisma.taskSubmission.update({
-      where: { id },
-      data: { grade, feedback, gradedAt: new Date() },
-      select: submissionSelect
+    await db
+      .update(taskSubmissions)
+      .set({ grade, feedback, gradedAt: new Date(), updatedAt: new Date() })
+      .where(eq(taskSubmissions.id, id))
+
+    return db.query.taskSubmissions.findFirst({
+      where: eq(taskSubmissions.id, id),
+      columns: submissionColumns,
+      with: submissionRelations,
     })
   }
 }

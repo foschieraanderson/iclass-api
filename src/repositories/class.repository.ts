@@ -1,17 +1,33 @@
+import { and, eq, inArray } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 
-import { prisma } from '@/database/prisma'
-import { publicSelect as publicUserSelect } from '@/repositories/user.repository'
+import { db } from '@/database/db'
+import { classStudents, classes, taskSubmissions, tasks, users } from '@/database/schema'
 
-const classSelect = {
+const publicUserColumns = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+} as const
+
+const classColumns = {
   id: true,
   code: true,
   period: true,
   grade: true,
-  teacher: { select: publicUserSelect },
-  students: { select: { student: { select: publicUserSelect } } },
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
+} as const
+
+const classRelations = {
+  teacher: { columns: publicUserColumns },
+  students: {
+    columns: {},
+    with: { student: { columns: publicUserColumns } },
+  },
 } as const
 
 function mapClass<T extends { students: Array<{ student: S }>; [k: string]: unknown }, S>(raw: T) {
@@ -37,93 +53,118 @@ export interface UpdateClassData {
 export class ClassRepository {
   async create(data: CreateClassData) {
     const { studentIds, ...classData } = data
-    const raw = await prisma.class.create({
-      data: {
-        id: uuidv7(),
-        ...classData,
-        students: {
-          create: studentIds.map((studentId) => ({ studentId }))
-        }
-      },
-      select: classSelect
+
+    const raw = await db.transaction(async (tx) => {
+      const [{ id }] = await tx
+        .insert(classes)
+        .values({ id: uuidv7(), ...classData })
+        .returning({ id: classes.id })
+
+      if (studentIds.length > 0) {
+        await tx.insert(classStudents).values(studentIds.map((studentId) => ({ classId: id, studentId })))
+      }
+
+      return tx.query.classes.findFirst({
+        where: eq(classes.id, id),
+        columns: classColumns,
+        with: classRelations,
+      })
     })
-    return mapClass(raw)
+
+    return mapClass(raw!)
   }
 
   async findAll() {
-    const rows = await prisma.class.findMany({ select: classSelect })
+    const rows = await db.query.classes.findMany({
+      columns: classColumns,
+      with: classRelations,
+    })
     return rows.map(mapClass)
   }
 
   async findById(id: string) {
-    const raw = await prisma.class.findUnique({ where: { id }, select: classSelect })
+    const raw = await db.query.classes.findFirst({
+      where: eq(classes.id, id),
+      columns: classColumns,
+      with: classRelations,
+    })
     if (!raw) return null
     return mapClass(raw)
   }
 
   async findByCode(code: string) {
-    return prisma.class.findUnique({ where: { code }, select: { id: true, code: true } })
+    return (
+      db.query.classes.findFirst({
+        where: eq(classes.code, code),
+        columns: { id: true, code: true },
+      }) ?? null
+    )
   }
 
   async update(id: string, data: UpdateClassData) {
     const { studentIds, ...classData } = data
 
-    return prisma.$transaction(async (tx) => {
+    const raw = await db.transaction(async (tx) => {
       if (studentIds !== undefined) {
-        await tx.classStudent.deleteMany({ where: { classId: id } })
-        await tx.classStudent.createMany({
-          data: studentIds.map((studentId) => ({ classId: id, studentId }))
-        })
+        await tx.delete(classStudents).where(eq(classStudents.classId, id))
+        if (studentIds.length > 0) {
+          await tx.insert(classStudents).values(studentIds.map((studentId) => ({ classId: id, studentId })))
+        }
       }
 
-      const raw = await tx.class.update({
-        where: { id },
-        data: classData,
-        select: classSelect
-      })
+      if (Object.keys(classData).length > 0) {
+        await tx
+          .update(classes)
+          .set({ ...classData, updatedAt: new Date() })
+          .where(eq(classes.id, id))
+      }
 
-      return mapClass(raw)
+      return tx.query.classes.findFirst({
+        where: eq(classes.id, id),
+        columns: classColumns,
+        with: classRelations,
+      })
     })
+
+    return mapClass(raw!)
   }
 
   async findReport(classId: string) {
-    return prisma.class.findUnique({
-      where: { id: classId },
-      select: {
-        id: true,
-        code: true,
-        teacherId: true,
+    return db.query.classes.findFirst({
+      where: eq(classes.id, classId),
+      columns: { id: true, code: true, teacherId: true },
+      with: {
         tasks: {
-          select: {
-            id: true,
-            title: true,
-            score: true,
+          columns: { id: true, title: true, score: true },
+          with: {
             submissions: {
-              select: { studentId: true, grade: true, gradedAt: true }
-            }
-          }
+              columns: { studentId: true, grade: true, gradedAt: true },
+            },
+          },
         },
         students: {
-          select: { student: { select: publicUserSelect } }
-        }
-      }
+          columns: {},
+          with: { student: { columns: publicUserColumns } },
+        },
+      },
     })
   }
 
   async addStudents(classId: string, studentIds: string[]): Promise<void> {
-    await prisma.classStudent.createMany({
-      data: studentIds.map((studentId) => ({ classId, studentId })),
-      skipDuplicates: true
-    })
+    if (studentIds.length === 0) return
+    await db
+      .insert(classStudents)
+      .values(studentIds.map((studentId) => ({ classId, studentId })))
+      .onConflictDoNothing()
   }
 
   async removeStudents(classId: string, studentIds: string[]): Promise<void> {
-    await prisma.classStudent.deleteMany({
-      where: { classId, studentId: { in: studentIds } }
-    })
+    await db
+      .delete(classStudents)
+      .where(and(eq(classStudents.classId, classId), inArray(classStudents.studentId, studentIds)))
   }
 
   async delete(id: string) {
-    await prisma.class.delete({ where: { id } })
+    await db.delete(classes).where(eq(classes.id, id))
   }
 }

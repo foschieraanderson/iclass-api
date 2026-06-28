@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs'
 import { uuidv7 } from 'uuidv7'
 
-import { prisma } from '@/database/prisma'
+import { db } from '@/database/db'
+import { classStudents, classes, passwordResetTokens, taskSubmissions, tasks, users } from '@/database/schema'
 
 export const DEFAULT_PASSWORD = 'Password123'
 
@@ -13,15 +14,17 @@ interface SeedUserOptions {
 }
 
 export async function seedUser(opts: SeedUserOptions = {}) {
-  return prisma.user.create({
-    data: {
+  const [user] = await db
+    .insert(users)
+    .values({
       id: uuidv7(),
       name: opts.name ?? 'Test User',
       email: opts.email ?? `user-${uuidv7()}@test.com`,
       password: await bcrypt.hash(opts.password ?? DEFAULT_PASSWORD, 10),
-      role: opts.role ?? 'student'
-    }
-  })
+      role: opts.role ?? 'student',
+    })
+    .returning()
+  return user
 }
 
 export async function seedAdmin(overrides: SeedUserOptions = {}) {
@@ -48,18 +51,18 @@ export async function seedClass(opts: SeedClassOptions) {
   const grade = (opts.grade ?? '3A').toUpperCase()
   const code = `${period}-${grade}`
 
-  return prisma.class.create({
-    data: {
-      id: uuidv7(),
-      code,
-      period,
-      grade,
-      teacherId: opts.teacherId,
-      students: {
-        create: opts.studentIds.map((studentId) => ({ studentId }))
-      }
-    }
-  })
+  const [cls] = await db
+    .insert(classes)
+    .values({ id: uuidv7(), code, period, grade, teacherId: opts.teacherId })
+    .returning()
+
+  if (opts.studentIds.length > 0) {
+    await db
+      .insert(classStudents)
+      .values(opts.studentIds.map((studentId) => ({ classId: cls.id, studentId })))
+  }
+
+  return cls
 }
 
 interface SeedTaskOptions {
@@ -71,16 +74,18 @@ interface SeedTaskOptions {
 }
 
 export async function seedTask(opts: SeedTaskOptions) {
-  return prisma.task.create({
-    data: {
+  const [task] = await db
+    .insert(tasks)
+    .values({
       id: uuidv7(),
       classId: opts.classId,
       createdById: opts.createdById,
       title: opts.title ?? 'Test Task',
       score: opts.score ?? 5,
-      expiresAt: opts.expiresAt
-    }
-  })
+      expiresAt: opts.expiresAt,
+    })
+    .returning()
+  return task
 }
 
 interface SeedSubmissionOptions {
@@ -92,37 +97,43 @@ interface SeedSubmissionOptions {
 }
 
 export async function seedSubmission(opts: SeedSubmissionOptions) {
-  return prisma.taskSubmission.create({
-    data: {
+  const [submission] = await db
+    .insert(taskSubmissions)
+    .values({
       id: uuidv7(),
       taskId: opts.taskId,
       studentId: opts.studentId,
       textAnswer: opts.textAnswer ?? 'Test answer',
       grade: opts.grade,
       feedback: opts.feedback,
-      gradedAt: opts.grade !== undefined ? new Date() : undefined
-    }
-  })
+      gradedAt: opts.grade !== undefined ? new Date() : undefined,
+    })
+    .returning()
+  return submission
 }
 
 export async function seedPasswordResetToken(userId: string, code = '123456', minutesValid = 15) {
-  return prisma.passwordResetToken.create({
-    data: {
+  const [token] = await db
+    .insert(passwordResetTokens)
+    .values({
       id: uuidv7(),
       userId,
       code,
-      expiresAt: new Date(Date.now() + minutesValid * 60 * 1000)
-    }
-  })
+      expiresAt: new Date(Date.now() + minutesValid * 60 * 1000),
+    })
+    .returning()
+  return token
 }
 
 export async function seedExpiredPasswordResetToken(userId: string, code = '000000') {
-  return prisma.passwordResetToken.create({
-    data: {
+  const [token] = await db
+    .insert(passwordResetTokens)
+    .values({
       id: uuidv7(),
       userId,
       code,
-      expiresAt: new Date(Date.now() - 1000)
-    }
-  })
+      expiresAt: new Date(Date.now() - 1000),
+    })
+    .returning()
+  return token
 }

@@ -1,36 +1,42 @@
+import { and, eq, gt, isNull } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 
-import { prisma } from '@/database/prisma'
+import { db } from '@/database/db'
+import { passwordResetTokens } from '@/database/schema'
 
 export class PasswordResetRepository {
   async create(userId: string, code: string, expiresAt: Date) {
-    return prisma.passwordResetToken.create({
-      data: { id: uuidv7(), userId, code, expiresAt }
-    })
+    const [token] = await db
+      .insert(passwordResetTokens)
+      .values({ id: uuidv7(), userId, code, expiresAt })
+      .returning()
+    return token
   }
 
   async findActiveByUserIdAndCode(userId: string, code: string) {
-    return prisma.passwordResetToken.findFirst({
-      where: {
-        userId,
-        code,
-        usedAt: null,
-        expiresAt: { gt: new Date() }
-      }
-    })
+    return (
+      db.query.passwordResetTokens.findFirst({
+        where: and(
+          eq(passwordResetTokens.userId, userId),
+          eq(passwordResetTokens.code, code),
+          isNull(passwordResetTokens.usedAt),
+          gt(passwordResetTokens.expiresAt, new Date()),
+        ),
+      }) ?? null
+    )
   }
 
   async markAsUsed(id: string) {
-    return prisma.passwordResetToken.update({
-      where: { id },
-      data: { usedAt: new Date() }
-    })
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.id, id))
   }
 
   async invalidatePreviousTokens(userId: string) {
-    return prisma.passwordResetToken.updateMany({
-      where: { userId, usedAt: null },
-      data: { usedAt: new Date() }
-    })
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)))
   }
 }

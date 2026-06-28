@@ -1,4 +1,7 @@
-import { prisma } from '@/database/prisma'
+import { and, eq } from 'drizzle-orm'
+
+import { db } from '@/database/db'
+import { classStudents } from '@/database/schema'
 import { SubmissionRepository } from '@/repositories/submission.repository'
 import { TaskRepository } from '@/repositories/task.repository'
 import type { GradeSubmissionDTO } from '@/schemas/submission.schema'
@@ -15,9 +18,11 @@ export class SubmissionService {
     const task = await taskRepository.findByIdWithClass(taskId)
     if (!task) throw Object.assign(new Error('Task not found'), { statusCode: 404 })
 
-    const enrolled = await prisma.classStudent.findUnique({
-      where: { classId_studentId: { classId: task.classId, studentId: requesterId } }
-    })
+    const [enrolled] = await db
+      .select({ classId: classStudents.classId })
+      .from(classStudents)
+      .where(and(eq(classStudents.classId, task.classId), eq(classStudents.studentId, requesterId)))
+      .limit(1)
     if (!enrolled) throw Object.assign(new Error('Forbidden'), { statusCode: 403 })
 
     const existing = await repository.findByTaskAndStudent(taskId, requesterId)
@@ -69,7 +74,7 @@ export class SubmissionService {
         task: { id: task.id, title: task.title, score: task.score, expiresAt: task.expiresAt, class: task.class },
         status,
         onTime,
-        submission: sub ? { id: sub.id, grade: sub.grade, gradedAt: sub.gradedAt, createdAt: sub.createdAt } : null
+        submission: sub ? { id: sub.id, grade: sub.grade, gradedAt: sub.gradedAt, createdAt: sub.createdAt } : null,
       }
     })
 
@@ -82,7 +87,7 @@ export class SubmissionService {
       late: items.filter((i) => i.onTime === false).length,
       graded: items.filter((i) => i.submission?.grade != null).length,
       totalEarned: items.reduce((sum, i) => sum + (i.submission?.grade ?? 0), 0),
-      totalPossible: items.reduce((sum, i) => sum + i.task.score, 0)
+      totalPossible: items.reduce((sum, i) => sum + i.task.score, 0),
     }
 
     return { summary, tasks: items }

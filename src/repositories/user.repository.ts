@@ -1,7 +1,8 @@
+import { eq } from 'drizzle-orm'
 import { uuidv7 } from 'uuidv7'
 
-import { prisma } from '@/database/prisma'
-import type { Role } from '@/database/generated/index.js'
+import { db } from '@/database/db'
+import { type Role, users } from '@/database/schema'
 
 export interface CreateUserData {
   name: string
@@ -10,47 +11,56 @@ export interface CreateUserData {
   role: Role
 }
 
-export const publicSelect = {
-  id: true,
-  name: true,
-  email: true,
-  role: true,
-  createdAt: true,
-  updatedAt: true
+export const publicColumns = {
+  id: users.id,
+  name: users.name,
+  email: users.email,
+  role: users.role,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
 } as const
 
 export class UserRepository {
   async create(data: CreateUserData) {
-    return prisma.user.create({
-      data: { id: uuidv7(), ...data },
-      select: publicSelect
-    })
+    const [user] = await db
+      .insert(users)
+      .values({ id: uuidv7(), ...data })
+      .returning(publicColumns)
+    return user
   }
 
   async findAll(role?: Role) {
-    return prisma.user.findMany({
-      where: role ? { role } : undefined,
-      select: publicSelect
+    return db.query.users.findMany({
+      where: role ? eq(users.role, role) : undefined,
+      columns: { password: false },
     })
   }
 
   async findById(id: string) {
-    return prisma.user.findUnique({ where: { id }, select: publicSelect })
+    return db.query.users.findFirst({
+      where: eq(users.id, id),
+      columns: { password: false },
+    })
   }
 
   async findByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } })
+    return db.query.users.findFirst({ where: eq(users.email, email) }) ?? null
   }
 
   async findByIdWithPassword(id: string) {
-    return prisma.user.findUnique({ where: { id } })
+    return db.query.users.findFirst({ where: eq(users.id, id) }) ?? null
   }
 
   async update(id: string, data: Partial<CreateUserData>) {
-    return prisma.user.update({ where: { id }, data, select: publicSelect })
+    const [updated] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning(publicColumns)
+    return updated
   }
 
   async delete(id: string) {
-    return prisma.user.delete({ where: { id } })
+    await db.delete(users).where(eq(users.id, id))
   }
 }

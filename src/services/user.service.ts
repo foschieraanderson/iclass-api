@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 
 import { UserRepository } from '@/repositories/user.repository'
-import type { Role } from '@/database/generated/index.js'
+import type { Role } from '@/database/schema'
 import type { ChangePasswordDTO, CreateUserDTO, UpdateUserDTO } from '@/schemas/user.schema'
 
 const repository = new UserRepository()
