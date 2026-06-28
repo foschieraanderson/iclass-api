@@ -226,6 +226,7 @@ O campo `code` é gerado automaticamente a partir de `period` + `grade` (ex: `"2
 | `POST` | `/api/v1/tasks` | admin \| teacher | Cria uma tarefa (multipart/form-data, aceita arquivo) |
 | `GET` | `/api/v1/tasks` | JWT | Lista tarefas — admin/teacher veem as próprias; alunos veem as da turma |
 | `GET` | `/api/v1/tasks/:id` | JWT | Retorna uma tarefa pelo ID |
+| `GET` | `/api/v1/tasks/:id/file` | JWT | Faz download do PDF anexado à tarefa |
 | `PATCH` | `/api/v1/tasks/:id` | admin \| teacher | Atualiza tarefa (teacher: apenas da própria turma) |
 | `DELETE` | `/api/v1/tasks/:id` | admin \| teacher | Remove tarefa (teacher: apenas da própria turma) |
 
@@ -240,6 +241,7 @@ O campo `score` aceita apenas valores da sequência de Fibonacci: `1, 2, 3, 5, 8
 | `GET` | `/api/v1/submissions/mine` | student | Lista as próprias submissões |
 | `GET` | `/api/v1/submissions/report` | student | Relatório consolidado de tasks do aluno (status, prazo, notas) |
 | `GET` | `/api/v1/submissions/:id` | JWT | Retorna uma submissão (student: apenas a própria) |
+| `GET` | `/api/v1/submissions/:id/download` | JWT | Faz download do PDF da submissão (student: apenas a própria; teacher: apenas da própria turma) |
 | `PATCH` | `/api/v1/submissions/:id` | teacher \| admin | Avalia a submissão (`grade` + `feedback`) |
 
 ### Dashboard
