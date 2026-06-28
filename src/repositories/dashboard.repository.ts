@@ -1,4 +1,4 @@
-import { count, eq, isNull } from 'drizzle-orm'
+import { and, count, eq, gte, isNotNull, isNull, sql } from 'drizzle-orm'
 
 import { db } from '@/database/db'
 import { classStudents, classes, taskSubmissions, tasks, users } from '@/database/schema'
@@ -27,9 +27,9 @@ export class DashboardRepository {
       where: eq(classes.teacherId, teacherId),
       columns: { id: true, code: true, period: true, grade: true },
       with: {
-        students: { columns: {} },
+        students: { columns: { studentId: true } },
         tasks: {
-          columns: {},
+          columns: { id: true },
           with: {
             submissions: {
               where: isNull(taskSubmissions.grade),
@@ -44,6 +44,70 @@ export class DashboardRepository {
       ...cls,
       _count: { students: cls.students.length, tasks: cls.tasks.length },
     }))
+  }
+
+  async getTeacherChartData(teacherId: string) {
+    const sixMonthsAgo = new Date()
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+    sixMonthsAgo.setDate(1)
+    sixMonthsAgo.setHours(0, 0, 0, 0)
+
+    const [submissionsPerMonth, scorePerClass] = await Promise.all([
+      db
+        .select({
+          month: sql<string>`to_char(date_trunc('month', ${taskSubmissions.createdAt}), 'YYYY-MM')`,
+          count: count(),
+        })
+        .from(taskSubmissions)
+        .innerJoin(tasks, eq(taskSubmissions.taskId, tasks.id))
+        .innerJoin(classes, eq(tasks.classId, classes.id))
+        .where(and(eq(classes.teacherId, teacherId), gte(taskSubmissions.createdAt, sixMonthsAgo)))
+        .groupBy(sql`date_trunc('month', ${taskSubmissions.createdAt})`)
+        .orderBy(sql`date_trunc('month', ${taskSubmissions.createdAt})`),
+      db
+        .select({
+          code: classes.code,
+          avg: sql<number>`round(avg(${taskSubmissions.grade}))::int`,
+        })
+        .from(taskSubmissions)
+        .innerJoin(tasks, eq(taskSubmissions.taskId, tasks.id))
+        .innerJoin(classes, eq(tasks.classId, classes.id))
+        .where(and(eq(classes.teacherId, teacherId), isNotNull(taskSubmissions.grade)))
+        .groupBy(classes.id, classes.code),
+    ])
+
+    return { submissionsPerMonth, scorePerClass }
+  }
+
+  async getAdminChartData() {
+    const sixMonthsAgo = new Date()
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5)
+    sixMonthsAgo.setDate(1)
+    sixMonthsAgo.setHours(0, 0, 0, 0)
+
+    const [submissionsPerMonth, scorePerClass] = await Promise.all([
+      db
+        .select({
+          month: sql<string>`to_char(date_trunc('month', ${taskSubmissions.createdAt}), 'YYYY-MM')`,
+          count: count(),
+        })
+        .from(taskSubmissions)
+        .where(gte(taskSubmissions.createdAt, sixMonthsAgo))
+        .groupBy(sql`date_trunc('month', ${taskSubmissions.createdAt})`)
+        .orderBy(sql`date_trunc('month', ${taskSubmissions.createdAt})`),
+      db
+        .select({
+          code: classes.code,
+          avg: sql<number>`round(avg(${taskSubmissions.grade}))::int`,
+        })
+        .from(taskSubmissions)
+        .innerJoin(tasks, eq(taskSubmissions.taskId, tasks.id))
+        .innerJoin(classes, eq(tasks.classId, classes.id))
+        .where(isNotNull(taskSubmissions.grade))
+        .groupBy(classes.id, classes.code),
+    ])
+
+    return { submissionsPerMonth, scorePerClass }
   }
 
   async getAdminStats() {

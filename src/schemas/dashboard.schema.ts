@@ -56,3 +56,8 @@ export const dashboardResponseSchema = z.discriminatedUnion('role', [
   teacherDashboardSchema,
   adminDashboardSchema
 ])
+
+export const dashboardChartsSchema = z.object({
+  submissionsPerMonth: z.array(z.object({ month: z.string(), count: z.number() })),
+  scorePerClass: z.array(z.object({ code: z.string(), avg: z.number() })),
+})

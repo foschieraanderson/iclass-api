@@ -65,6 +65,22 @@ export class DashboardService {
     }
   }
 
+  async getChartsForTeacher(teacherId: string) {
+    const { submissionsPerMonth, scorePerClass } = await repository.getTeacherChartData(teacherId)
+    return {
+      submissionsPerMonth: submissionsPerMonth.map((r) => ({ month: r.month, count: Number(r.count) })),
+      scorePerClass: scorePerClass.map((r) => ({ code: r.code, avg: Number(r.avg) })),
+    }
+  }
+
+  async getChartsForAdmin() {
+    const { submissionsPerMonth, scorePerClass } = await repository.getAdminChartData()
+    return {
+      submissionsPerMonth: submissionsPerMonth.map((r) => ({ month: r.month, count: Number(r.count) })),
+      scorePerClass: scorePerClass.map((r) => ({ code: r.code, avg: Number(r.avg) })),
+    }
+  }
+
   async getForAdmin() {
     const { userCounts, totalClasses, totalTasks, totalSubmissions, pendingGrades } =
       await repository.getAdminStats()
