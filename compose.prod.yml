@@ -26,6 +26,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: builder
+      network: host
     command: >
       sh -c "pnpm db:migrate"
     env_file: .env.production
@@ -41,6 +42,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     restart: always
     env_file: .env.production
     ports:
