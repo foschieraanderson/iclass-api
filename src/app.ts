@@ -25,7 +25,8 @@ app.setErrorHandler((error: FastifyError, _request, reply) => {
 
 export async function registerPlugins() {
   await app.register(cors, {
-    origin: true
+    origin: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   })
 
   await app.register(jwtPlugin)
@@ -48,7 +49,10 @@ export async function buildApp(): Promise<FastifyInstance> {
     reply.status(error.statusCode ?? 500).send({ message: error.message })
   })
 
-  await instance.register(cors, { origin: true })
+  await instance.register(cors, {
+    origin: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  })
   await instance.register(jwtPlugin)
   await instance.register(emailPlugin)
   await instance.register(multipartPlugin)
